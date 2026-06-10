@@ -1,0 +1,11 @@
+{
+  "name": "egypt-grocery-scraper-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "capture:network": "node tools/capture_network.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.54.0"
+  }
+}

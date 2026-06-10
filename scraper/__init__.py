@@ -1,0 +1,2 @@
+"""Egypt grocery scraping package."""
+

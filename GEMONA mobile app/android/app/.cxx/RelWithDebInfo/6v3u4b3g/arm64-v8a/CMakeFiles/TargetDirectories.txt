@@ -1,0 +1,2 @@
+E:/ShopKing/release 2.3/shopking-customer-app/android/app/.cxx/RelWithDebInfo/6v3u4b3g/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/ShopKing/release 2.3/shopking-customer-app/android/app/.cxx/RelWithDebInfo/6v3u4b3g/arm64-v8a/CMakeFiles/rebuild_cache.dir

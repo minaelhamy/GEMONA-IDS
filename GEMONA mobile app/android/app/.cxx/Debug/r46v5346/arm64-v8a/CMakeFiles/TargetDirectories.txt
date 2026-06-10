@@ -1,0 +1,2 @@
+C:/update plan for april 25/shopking/shopking-customer-app/android/app/.cxx/Debug/r46v5346/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/update plan for april 25/shopking/shopking-customer-app/android/app/.cxx/Debug/r46v5346/arm64-v8a/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,324 @@
+/* Active link for frontend start */
+
+.profile-link.active, .profile-link.active .lab {
+    --tw-text-opacity: 1;
+    color: rgb(var(--primary) / var(--tw-text-opacity));
+}
+
+/* Active link for frontend close */
+
+/* Date picker code start*/
+.dp__input {
+    --tw-border-opacity: 1;
+    border-color: rgb(229 231 235 / var(--tw-border-opacity)) !important;
+    color: inherit !important;
+    font-family: var(--client-font) !important;
+    font-size: 0.875rem !important;
+    padding: 6px 25px !important;
+}
+
+.dp__input:hover {
+    --tw-border-opacity: 1;
+    border-color: rgb(229 231 235 / var(--tw-border-opacity)) !important;
+    color: inherit !important;
+}
+
+.dp__input_focus {
+    border-color: rgb(var(--primary) / 0.2) !important;
+    color: inherit !important;
+}
+
+.dp__input.invalid {
+    border-color: rgb(252 165 165) !important;
+}
+
+/* Date picker code close here*/
+
+
+/* Tag package customize start*/
+.vue-tags-input {
+    max-width: 100% !important;
+}
+
+.vue-tags-input .ti-input {
+    --tw-border-opacity: 1 !important;
+    border-radius: 0.375rem;
+    border-color: rgb(229 231 235 / var(--tw-border-opacity)) !important;
+}
+
+.vue-tags-input.ti-focus .ti-input {
+    border-color: rgb(var(--primary) / 0.2) !important;
+}
+
+.vue-tags-input.invalid-tag .ti-input {
+    --tw-border-opacity: 1 !important;
+    border-color: rgb(252 165 165 / var(--tw-border-opacity)) !important;
+}
+
+/* Tag package customize end*/
+
+/* Textarea package customize start */
+.textarea-error-box-style {
+    padding: 0;
+    margin: 0;
+    border: 1px solid;
+    border-radius: 0.375rem;
+}
+
+.textarea-error-box-style.invalid::before {
+    content: none !important;
+}
+
+.textarea-border-radius {
+    border-radius: 0 0 0 0.375rem;
+    border-color: rgb(229 231 235 / var(--tw-border-opacity)) !important;
+}
+
+.ql-toolbar.ql-snow {
+    border: 1px solid rgb(229 231 235) !important;
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+.ql-container.ql-snow {
+    border-left: 1px solid rgb(229 231 235) !important;
+    border-right: 1px solid rgb(229 231 235) !important;
+    border-bottom: 1px solid rgb(229 231 235) !important;
+}
+
+/* Textarea package customize end */
+
+/* Text details v-html section start */
+.text-description>ol {
+    list-style: auto !important;
+    margin: auto !important;
+    padding: revert !important;
+}
+
+.text-description>ul {
+    list-style: unset !important;
+    margin: auto !important;
+    padding: revert !important;
+}
+
+/* Text details v-html section end */
+
+/* Select code start */
+.vue-select.no-radius {
+    border-radius: 0 !important;
+}
+
+.vue-select {
+    width: auto !important;
+    border: 1px solid rgb(229 231 235 / var(--tw-border-opacity)) !important;
+    border-radius: 0.375rem !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+}
+
+.vue-select.invalid {
+    border: 1px solid rgb(252 165 165 / var(--tw-border-opacity)) !important
+}
+
+.vue-input {
+    padding: 0.1rem 0 !important;
+}
+
+.vue-input input {
+    font-size: 0.9375rem !important;
+    font-weight: 400 !important;
+    line-height: 1.3 !important;
+}
+
+.vue-input input::placeholder {
+    color: #697a8d !important;
+}
+
+.vue-dropdown {
+    border: 1px solid rgb(var(--primary) / 0.2) !important;
+    box-shadow: 0 0.25rem 1rem rgb(229 231 235 / 45%) !important;
+}
+
+.vue-select.direction-top .vue-dropdown {
+    border-top-left-radius: 0.375rem !important;
+    border-top-right-radius: 0.375rem !important;
+    z-index: 100000;
+}
+
+.vue-select.direction-bottom .vue-dropdown {
+    border-bottom-left-radius: 0.375rem !important;
+    border-bottom-right-radius: 0.375rem !important;
+    z-index: 100000;
+}
+
+.vue-select[aria-expanded='true'].direction-top {
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.vue-select[aria-expanded='true'].direction-bottom {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.vue-select[aria-expanded='true'] {
+    border-color: rgb(var(--primary) / 0.2) !important;
+}
+
+.vue-dropdown-item.highlighted {
+    background-color: rgba(67, 89, 113, .04) !important;
+}
+
+.vue-dropdown-item.selected.highlighted {
+    background-color: rgba(105, 108, 255, .08) !important;
+    color: rgb(var(--primary) / var(--tw-text-opacity)) !important;
+}
+
+.vue-dropdown-item.selected {
+    background-color: rgba(105, 108, 255, .08) !important;
+    color: rgb(var(--primary) / var(--tw-text-opacity)) !important;
+}
+
+.vue-dropdown-item {
+    font-size: 15px;
+    padding: 0.4375rem 0.875rem !important;
+}
+
+.frontend-select input::placeholder {
+    font-size: 1rem !important;
+    color: rgb(31 31 57 / 1) !important;
+}
+
+/* Select code close */
+
+/* Range slider code start */
+.simple-range-slider-popover.simple-range-slider-popover-left,
+.simple-range-slider-popover-arrow,
+.simple-range-slider-popover.simple-range-slider-popover-right {
+    display: none;
+}
+
+.simple-range-slider .simple-range-slider-bg-bar {
+    margin: 10px 10px 10px !important;
+}
+
+.simple-range-slider .simple-range-slider-bg-bar .simple-range-slider-anchor {
+    background: #ffffff !important;
+}
+
+/* Range slider code close */
+
+/* Icon size start */
+
+.lab-font-color-1 {
+    color: #dee2e5 !important;
+}
+
+[class="lab"].lab-font-size-20, [class^="lab-"].lab-font-size-20, [class*=" lab-"].lab-font-size-20 {
+    font-size: 20px !important;
+}
+
+[class="lab"].lab-font-size-2xl, [class^="lab-"].lab-font-size-2xl, [class*=" lab-"].lab-font-size-2xl {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+}
+
+[class="lab"].lab-font-size-xl, [class^="lab-"].lab-font-size-xl, [class*=" lab-"].lab-font-size-xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+}
+
+[class="lab"].lab-font-size-8, [class^="lab-"].lab-font-size-8, [class*=" lab-"].lab-font-size-8 {
+    font-size: 8px !important;
+}
+
+[class="lab"].lab-font-size-10, [class^="lab-"].lab-font-size-10, [class*=" lab-"].lab-font-size-10 {
+    font-size: 10px !important;
+}
+
+[class="lab"].lab-font-size-16, [class^="lab-"].lab-font-size-16, [class*=" lab-"].lab-font-size-16 {
+    font-size: 16px !important;
+}
+
+[class="lab"].lab-font-size-24, [class^="lab-"].lab-font-size-24, [class*=" lab-"].lab-font-size-24 {
+    font-size: 24px !important;
+}
+
+[class="lab"].lab-font-size-14, [class^="lab-"].lab-font-size-14, [class*=" lab-"].lab-font-size-14 {
+    font-size: 14px !important;
+}
+
+/* Icon size close */
+
+/* installer code start */
+.bg-installer {
+    background-image: url(../../../images/required/installer.jpg);
+}
+
+/* installer code close */
+
+/* installer code close */
+iframe.w-full.rounded-2xl {
+    background: rgb(20, 20, 20) !important;
+}
+
+.sr-only {
+    left: inherit !important;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    color: transparent;
+    cursor: pointer;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    height: 100%;
+    width: 100%;
+}
+
+.drawer:where([dir="ltr"], [dir="ltr"] *) {
+    right: 0px;
+    --tw-translate-x: 100%;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.drawer:where([dir="rtl"], [dir="rtl"] *) {
+    left: 0px;
+    right: unset !important;
+    --tw-translate-x: -100%;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.drawer.active:where([dir="ltr"], [dir="ltr"] *) {
+    --tw-translate-x: 0px;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.drawer.active:where([dir="rtl"], [dir="rtl"] *) {
+    --tw-translate-x: -0px;
+    right: unset !important;
+    transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.dp__clear_icon{
+    right: 1px !important;
+}
+[dir="rtl"] .dp__clear_icon{
+    right: unset !important;
+    left: 1px !important;
+}
+
+.dp__input_icons {
+    background: #fff;
+    padding: 4px 4px !important;
+}
+
+@media only screen and (max-width: 1023px) {
+    .velmld-parent.componentLoading {
+        position: unset !important;
+        
+    }
+}

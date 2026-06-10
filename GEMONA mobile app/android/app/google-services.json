@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "REPLACE_WITH_FIREBASE_SENDER_ID",
+    "project_id": "REPLACE_WITH_FIREBASE_PROJECT_ID",
+    "storage_bucket": "REPLACE_WITH_FIREBASE_STORAGE_BUCKET"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "REPLACE_WITH_FIREBASE_ANDROID_APP_ID",
+        "android_client_info": {
+          "package_name": "com.gemona.ids"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "REPLACE_WITH_FIREBASE_ANDROID_OAUTH_CLIENT_ID",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_FIREBASE_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "REPLACE_WITH_FIREBASE_WEB_OAUTH_CLIENT_ID",
+              "client_type": 3
+            },
+            {
+              "client_id": "REPLACE_WITH_FIREBASE_IOS_OAUTH_CLIENT_ID",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.gemona.ids"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
