@@ -4,6 +4,7 @@ set -Eeuo pipefail
 REPOPATH="/home/shargtvh/repositories/GEMONA-IDS"
 DEPLOYPATH="/home/shargtvh/gemona_ids_app"
 COMPOSER=""
+LOCAL_COMPOSER="/home/shargtvh/bin/composer"
 
 log() {
     printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1"
@@ -18,6 +19,7 @@ trap 'code=$?; log "Deployment failed on line $LINENO with exit code $code"; exi
 
 find_composer() {
     for candidate in \
+        "$LOCAL_COMPOSER" \
         /opt/cpanel/composer/bin/composer \
         /usr/local/bin/composer \
         /usr/bin/composer \
@@ -35,6 +37,24 @@ find_composer() {
     fi
 
     return 1
+}
+
+install_local_composer() {
+    local installer="/home/shargtvh/composer-setup.php"
+
+    log "Composer was not found; installing local Composer at $LOCAL_COMPOSER"
+    run mkdir -p /home/shargtvh/bin
+
+    if command -v curl >/dev/null 2>&1; then
+        run curl -sS https://getcomposer.org/installer -o "$installer"
+    else
+        run php -r "copy('https://getcomposer.org/installer', '$installer');"
+    fi
+
+    run php "$installer" --install-dir=/home/shargtvh/bin --filename=composer
+    run rm -f "$installer"
+    run chmod u+x "$LOCAL_COMPOSER"
+    COMPOSER="$LOCAL_COMPOSER"
 }
 
 log "Starting GEMONA IDS deployment"
@@ -77,8 +97,7 @@ else
 fi
 
 if ! find_composer; then
-    log "Composer was not found. Install Composer or tell me the Composer path from cPanel Terminal."
-    exit 1
+    install_local_composer
 fi
 
 log "Installing Composer dependencies with $COMPOSER"
