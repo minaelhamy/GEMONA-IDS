@@ -1,23 +1,4 @@
 ---
 deployment:
   tasks:
-    - export REPOPATH=/home/shargtvh/repositories/GEMONA-IDS
-    - export DEPLOYPATH=/home/shargtvh/gemona_ids_app
-    - /bin/mkdir -p $DEPLOYPATH
-    - /usr/bin/rsync -a --delete --exclude=.env --exclude=storage --exclude=bootstrap/cache --exclude=vendor --exclude=node_modules $REPOPATH/web/ $DEPLOYPATH/
-    - /bin/mkdir -p $DEPLOYPATH/storage/app/public
-    - /bin/mkdir -p $DEPLOYPATH/storage/framework/cache
-    - /bin/mkdir -p $DEPLOYPATH/storage/framework/sessions
-    - /bin/mkdir -p $DEPLOYPATH/storage/framework/views
-    - /bin/mkdir -p $DEPLOYPATH/storage/logs
-    - /bin/mkdir -p $DEPLOYPATH/bootstrap/cache
-    - /bin/chmod -R u+rwX $DEPLOYPATH/storage
-    - /bin/chmod -R u+rwX $DEPLOYPATH/bootstrap/cache
-    - cd $DEPLOYPATH && /opt/cpanel/composer/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-    - cd $DEPLOYPATH && php artisan storage:link
-    - cd $DEPLOYPATH && php artisan config:clear
-    - cd $DEPLOYPATH && php artisan route:clear
-    - cd $DEPLOYPATH && php artisan view:clear
-    - cd $DEPLOYPATH && php artisan config:cache
-    - cd $DEPLOYPATH && php artisan route:cache
-    - cd $DEPLOYPATH && php artisan view:cache
+    - /bin/bash /home/shargtvh/repositories/GEMONA-IDS/deploy/cpanel_deploy.sh > /home/shargtvh/gemona_deploy.log 2>&1
