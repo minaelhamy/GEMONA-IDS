@@ -98,10 +98,11 @@ class ImportSupermarketCatalog extends Command
 
                 $categoryId = $this->categoryId($canonical['category_path'] ?? []);
                 $description = $this->descriptionFor($canonical);
+                $name = (string) ($cluster['canonical_name'] ?? $canonical['name']);
 
                 $payload = [
-                    'name' => (string) ($cluster['canonical_name'] ?? $canonical['name']),
-                    'slug' => $this->stableSlug((string) ($cluster['canonical_name'] ?? $canonical['name']), $cluster['cluster_id']),
+                    'name' => $this->safeName($name),
+                    'slug' => $this->stableSlug($name, $cluster['cluster_id']),
                     'sku' => 'GEM-' . $cluster['cluster_id'],
                     'product_category_id' => $categoryId,
                     'buying_price' => $basePrice,
@@ -257,7 +258,16 @@ class ImportSupermarketCatalog extends Command
 
     private function stableSlug(string $name, string $clusterId): string
     {
-        return (Str::slug($name) ?: 'product') . '-' . strtolower($clusterId);
+        $suffix = '-' . strtolower($clusterId);
+        $maxBaseLength = 255 - strlen($suffix);
+        $base = Str::slug($name) ?: 'product';
+
+        return Str::limit($base, $maxBaseLength, '') . $suffix;
+    }
+
+    private function safeName(string $name): string
+    {
+        return Str::limit(trim($name), 255, '');
     }
 
     private function parseDate(?string $value): ?Carbon
