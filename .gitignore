@@ -1,0 +1,9 @@
+/.DS_Store
+/error_log
+/**/error_log
+
+# Runtime dependencies and generated files should be installed/generated on each environment.
+/node_modules/
+/.venv/
+__pycache__/
+*.py[cod]
