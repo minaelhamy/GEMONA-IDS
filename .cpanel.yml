@@ -1,0 +1,23 @@
+---
+deployment:
+  tasks:
+    # Set the production app directory. Point ids.gemona.com's document root to:
+    # $HOME/gemona_ids_app/public
+    - 'export APPPATH=$HOME/gemona_ids_app'
+    - 'mkdir -p "$APPPATH"'
+
+    # Deploy the Laravel app from the monorepo without deleting live env/storage data.
+    - 'rsync -a --delete --exclude=".env" --exclude="storage/app/*" --exclude="storage/logs/*" --exclude="storage/framework/cache/*" --exclude="storage/framework/sessions/*" --exclude="storage/framework/views/*" --exclude="bootstrap/cache/*.php" web/ "$APPPATH/"'
+
+    # Install optimized PHP dependencies on the server.
+    - 'cd "$APPPATH" && if [ -x /opt/cpanel/composer/bin/composer ]; then /opt/cpanel/composer/bin/composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction; else composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction; fi'
+
+    # Keep deployment repeatable. The first .env must be edited manually with real secrets.
+    - 'cd "$APPPATH" && if [ ! -f .env ]; then cp .env.example .env; fi'
+    - 'cd "$APPPATH" && php artisan storage:link || true'
+    - 'cd "$APPPATH" && php artisan config:clear'
+    - 'cd "$APPPATH" && php artisan route:clear'
+    - 'cd "$APPPATH" && php artisan view:clear'
+    - 'cd "$APPPATH" && php artisan config:cache'
+    - 'cd "$APPPATH" && php artisan route:cache'
+    - 'cd "$APPPATH" && php artisan view:cache'
