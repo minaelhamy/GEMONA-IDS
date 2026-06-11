@@ -12,7 +12,6 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "ext-http": "*",
         "2checkoutv2/2checkout-php-sdk": "^1.0",
         "anandsiddharth/laravel-paytm-wallet": "^2.0",
         "aws/aws-sdk-php-laravel": "^3.9",

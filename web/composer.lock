@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e32f380fc6877111c9aca0deaf22bb38",
+    "content-hash": "4c0c7b1d416586fa07465f4832996c1d",
     "packages": [
         {
             "name": "2checkoutv2/2checkout-php-sdk",
@@ -14775,8 +14775,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.2",
-        "ext-http": "*"
+        "php": "^8.2"
     },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"
