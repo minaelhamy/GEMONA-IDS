@@ -17,6 +17,8 @@ use Illuminate\Support\Str;
 
 class ImportSupermarketCatalog extends Command
 {
+    private const PRODUCT_TEXT_LIMIT = 190;
+
     protected $signature = 'supermarket:import
         {--products= : Path to products.jsonl}
         {--clusters= : Path to clusters.json}
@@ -259,7 +261,7 @@ class ImportSupermarketCatalog extends Command
     private function stableSlug(string $name, string $clusterId): string
     {
         $suffix = '-' . strtolower($clusterId);
-        $maxBaseLength = 255 - strlen($suffix);
+        $maxBaseLength = self::PRODUCT_TEXT_LIMIT - strlen($suffix);
         $base = Str::slug($name) ?: 'product';
 
         return Str::limit($base, $maxBaseLength, '') . $suffix;
@@ -267,7 +269,7 @@ class ImportSupermarketCatalog extends Command
 
     private function safeName(string $name): string
     {
-        return Str::limit(trim($name), 255, '');
+        return Str::limit(trim($name), self::PRODUCT_TEXT_LIMIT, '');
     }
 
     private function parseDate(?string $value): ?Carbon
