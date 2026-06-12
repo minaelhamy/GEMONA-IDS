@@ -7,6 +7,10 @@ use App\Enums\Ask;
 use App\Enums\ShippingType;
 use App\Enums\Status;
 use App\Models\Product;
+use App\Models\ProductAttribute;
+use App\Models\ProductAttributeOption;
+use App\Models\ProductBrand;
+use App\Models\ProductVariation;
 use App\Models\ProductCategory;
 use App\Models\SupermarketProductSource;
 use Carbon\Carbon;
@@ -23,6 +27,7 @@ class ImportSupermarketCatalog extends Command
         {--products= : Path to products.jsonl}
         {--clusters= : Path to clusters.json}
         {--margin= : Margin percentage to add to source prices}
+        {--prices-only : For existing supermarket products, update only price, availability, source candidates, and sync metadata}
         {--dry-run : Read and validate the data without writing}';
 
     protected $description = 'Import deduplicated supermarket catalog products into GEMONA IDS.';
@@ -89,6 +94,7 @@ class ImportSupermarketCatalog extends Command
                 $externalKey = 'supermarket:' . $cluster['cluster_id'];
                 $basePrice = (float) ($cluster['min_price'] ?? $canonical['price'] ?? 0);
                 $sellingPrice = round($basePrice * (1 + ($margin / 100)), 2);
+                $availability = $this->availabilityFor($candidateRows);
 
                 $product = Product::withTrashed()->where('external_key', $externalKey)->first();
                 $isNew = !$product;
@@ -99,15 +105,28 @@ class ImportSupermarketCatalog extends Command
                 }
 
                 $categoryId = $this->categoryId($canonical['category_path'] ?? []);
+                $brandId = $this->brandId($canonical, (string) ($cluster['canonical_name'] ?? $canonical['name']));
                 $description = $this->descriptionFor($canonical);
                 $name = (string) ($cluster['canonical_name'] ?? $canonical['name']);
 
-                $payload = [
+                $syncPayload = [
+                    'buying_price' => $basePrice,
+                    'source_type' => 'supermarket',
+                    'external_key' => $externalKey,
+                    'supermarket_base_price' => $basePrice,
+                    'supermarket_margin_percent' => $margin,
+                    'supermarket_candidate_count' => count($candidateRows),
+                    'supermarket_available' => $availability['available'],
+                    'supermarket_available_quantity' => $availability['quantity'],
+                    'supermarket_synced_at' => now(),
+                ];
+
+                $catalogPayload = [
                     'name' => $this->safeName($name),
                     'slug' => $this->stableSlug($name, $cluster['cluster_id']),
                     'sku' => 'GEM-' . $cluster['cluster_id'],
                     'product_category_id' => $categoryId,
-                    'buying_price' => $basePrice,
+                    'product_brand_id' => $brandId,
                     'status' => Status::ACTIVE,
                     'can_purchasable' => Ask::YES,
                     'show_stock_out' => Activity::ENABLE,
@@ -117,14 +136,12 @@ class ImportSupermarketCatalog extends Command
                     'description' => $description,
                     'shipping_type' => ShippingType::FREE,
                     'shipping_cost' => 0,
-                    'source_type' => 'supermarket',
-                    'external_key' => $externalKey,
                     'external_image_url' => $canonical['image_url'] ?? null,
-                    'supermarket_base_price' => $basePrice,
-                    'supermarket_margin_percent' => $margin,
-                    'supermarket_candidate_count' => count($candidateRows),
-                    'supermarket_synced_at' => now(),
                 ];
+
+                $payload = (!$isNew && $this->option('prices-only'))
+                    ? $syncPayload
+                    : array_merge($catalogPayload, $syncPayload);
 
                 if (!$product->manual_price_override) {
                     $payload['selling_price'] = $sellingPrice;
@@ -133,9 +150,11 @@ class ImportSupermarketCatalog extends Command
 
                 $product->fill($payload);
                 $product->save();
+                $this->syncPackageVariation($product, $name, $sellingPrice);
                 $isNew ? $created++ : $updated++;
 
                 foreach ($candidateRows as $row) {
+                    $sourceAvailability = $this->availabilityFor([$row]);
                     SupermarketProductSource::updateOrCreate(
                         [
                             'source' => (string) $row['source'],
@@ -149,6 +168,8 @@ class ImportSupermarketCatalog extends Command
                             'source_image_url' => $row['image_url'] ?? null,
                             'source_product_url' => $row['product_url'] ?? null,
                             'source_category_path' => $row['category_path'] ?? null,
+                            'source_available' => $sourceAvailability['available'],
+                            'source_available_quantity' => $sourceAvailability['quantity'],
                             'source_payload' => $row,
                             'scraped_at' => $this->parseDate($row['scraped_at'] ?? null),
                         ]
@@ -248,6 +269,169 @@ class ImportSupermarketCatalog extends Command
         return $category?->id;
     }
 
+    private function brandId(array $row, string $name): ?int
+    {
+        $brand = Arr::get($row, 'brand')
+            ?: Arr::get($row, 'manufacturer')
+            ?: Arr::get($row, 'raw.brand')
+            ?: Arr::get($row, 'raw.manufacturer')
+            ?: $this->inferBrand($name);
+
+        $brand = $this->cleanText((string) $brand);
+        if (!$brand) {
+            return null;
+        }
+
+        $slug = Str::slug($brand) ?: Str::slug(Str::limit($brand, 40, ''));
+        if (!$slug) {
+            return null;
+        }
+
+        return ProductBrand::firstOrCreate(
+            ['slug' => $slug],
+            [
+                'name' => Str::limit($brand, self::PRODUCT_TEXT_LIMIT, ''),
+                'description' => null,
+                'status' => Status::ACTIVE,
+            ]
+        )->id;
+    }
+
+    private function inferBrand(string $name): ?string
+    {
+        $normalized = trim(preg_replace('/\s+/', ' ', $name));
+        if ($normalized === '') {
+            return null;
+        }
+
+        $knownPrefixes = [
+            'Abu Auf',
+            'Abu Shakra',
+            'Al Doha',
+            'Al Marai',
+            'Al Shark',
+            'Ariel',
+            'Betty Crocker',
+            'Coca Cola',
+            'Dairy Queen',
+            'Dove',
+            'El Bawadi',
+            'El Rashidi',
+            'Fine Baby',
+            'Head & Shoulders',
+            'Heinz',
+            'Johnson\'s',
+            'La Vache',
+            'Lipton',
+            'L\'Oreal',
+            'Nescafe',
+            'Nestle',
+            'Pampers',
+            'Red Bull',
+            'Seoudi',
+        ];
+
+        foreach ($knownPrefixes as $prefix) {
+            if (Str::startsWith(Str::lower($normalized), Str::lower($prefix . ' '))) {
+                return $prefix;
+            }
+        }
+
+        $tokens = preg_split('/\s+/', $normalized);
+        $first = trim($tokens[0] ?? '', " \t\n\r\0\x0B,.-:;()[]{}");
+        if ($first === '') {
+            return null;
+        }
+
+        if (in_array(Str::lower($first), ['el', 'al', 'abu', 'la'], true) && isset($tokens[1])) {
+            return $first . ' ' . trim($tokens[1], " \t\n\r\0\x0B,.-:;()[]{}");
+        }
+
+        return $first;
+    }
+
+    private function syncPackageVariation(Product $product, string $name, float $sellingPrice): void
+    {
+        $packageSize = $this->packageSize($name);
+        if (!$packageSize) {
+            return;
+        }
+
+        $attribute = ProductAttribute::firstOrCreate(['name' => 'Package Size']);
+        $option = ProductAttributeOption::firstOrCreate(
+            [
+                'product_attribute_id' => $attribute->id,
+                'name' => $packageSize,
+            ]
+        );
+
+        $variation = ProductVariation::firstOrNew([
+            'product_id' => $product->id,
+            'product_attribute_id' => $attribute->id,
+            'product_attribute_option_id' => $option->id,
+            'parent_id' => null,
+        ]);
+
+        $variation->fill([
+            'price' => $product->manual_price_override ? $product->variation_price : $sellingPrice,
+            'sku' => $product->sku,
+            'order' => 1,
+        ]);
+        $variation->save();
+    }
+
+    private function packageSize(string $name): ?string
+    {
+        $pattern = '/(?:^|[\s,\-])((?:\d+(?:[\.,]\d+)?\s*(?:kg|g|gm|gram|grams|l|ltr|liter|litre|ml|m|cm|mm|pcs|pc|pieces|piece|tabs|tablets|capsules|rolls|sheets|wipes|bags|sachets|pack|packs))|(?:\d+\s*[xX]\s*\d+(?:[\.,]\d+)?\s*(?:g|kg|ml|l|pcs|pieces|rolls|sheets)))\b/i';
+        if (!preg_match($pattern, $name, $matches)) {
+            return null;
+        }
+
+        return $this->cleanText(str_replace(',', '.', $matches[1]));
+    }
+
+    private function availabilityFor(array $rows): array
+    {
+        $available = false;
+        $quantity = 0;
+        $sawAvailability = false;
+
+        foreach ($rows as $row) {
+            $raw = Arr::get($row, 'raw', []);
+            $raw = is_array($raw) ? $raw : [];
+            $rowAvailable = null;
+            $rowQuantity = null;
+
+            if (array_key_exists('in_stock', $raw)) {
+                $rowAvailable = (bool) $raw['in_stock'];
+            } elseif (array_key_exists('stock_status', $raw)) {
+                $rowAvailable = Str::upper((string) $raw['stock_status']) !== 'OUT_OF_STOCK';
+            } elseif (array_key_exists('stock', $raw) && is_array($raw['stock'])) {
+                $status = Str::lower((string) ($raw['stock']['stockLevelStatus'] ?? ''));
+                $rowAvailable = $status !== '' ? $status !== 'outofstock' : null;
+                $rowQuantity = isset($raw['stock']['value']) ? (int) $raw['stock']['value'] : null;
+            }
+
+            if (array_key_exists('available_quantity', $raw)) {
+                $rowQuantity = (int) $raw['available_quantity'];
+                $rowAvailable ??= $rowQuantity > 0;
+            }
+
+            if ($rowAvailable !== null) {
+                $sawAvailability = true;
+                $available = $available || $rowAvailable;
+            }
+            if ($rowQuantity !== null) {
+                $quantity += max(0, $rowQuantity);
+            }
+        }
+
+        return [
+            'available' => $sawAvailability ? $available : true,
+            'quantity' => $quantity > 0 ? $quantity : null,
+        ];
+    }
+
     private function descriptionFor(array $row): ?string
     {
         $parts = array_filter([
@@ -270,6 +454,11 @@ class ImportSupermarketCatalog extends Command
     private function safeName(string $name): string
     {
         return Str::limit(trim($name), self::PRODUCT_TEXT_LIMIT, '');
+    }
+
+    private function cleanText(string $value): string
+    {
+        return trim(preg_replace('/\s+/', ' ', $value));
     }
 
     private function parseDate(?string $value): ?Carbon

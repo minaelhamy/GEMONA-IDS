@@ -10,7 +10,8 @@ class RefreshSupermarketCatalog extends Command
 {
     protected $signature = 'supermarket:refresh
         {--skip-scrape : Import the existing latest files without running the scraper}
-        {--margin= : Margin percentage to pass to the importer}';
+        {--margin= : Margin percentage to pass to the importer}
+        {--prices-only : For existing supermarket products, update only price, availability, source candidates, and sync metadata}';
 
     protected $description = 'Run the supermarket scraper, rebuild duplicate clusters, and import the catalog.';
 
@@ -26,6 +27,9 @@ class RefreshSupermarketCatalog extends Command
         $arguments = ['--products' => config('supermarkets.products_path'), '--clusters' => config('supermarkets.clusters_path')];
         if ($this->option('margin') !== null) {
             $arguments['--margin'] = $this->option('margin');
+        }
+        if ($this->option('prices-only')) {
+            $arguments['--prices-only'] = true;
         }
 
         return $this->call('supermarket:import', $arguments);

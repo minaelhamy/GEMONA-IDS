@@ -17,6 +17,8 @@ class SupermarketProductSource extends Model
         'source_image_url',
         'source_product_url',
         'source_category_path',
+        'source_available',
+        'source_available_quantity',
         'source_payload',
         'scraped_at',
     ];
@@ -25,6 +27,8 @@ class SupermarketProductSource extends Model
         'product_id'            => 'integer',
         'source_price'          => 'decimal:6',
         'source_category_path'  => 'array',
+        'source_available'      => 'boolean',
+        'source_available_quantity' => 'integer',
         'source_payload'        => 'array',
         'scraped_at'            => 'datetime',
     ];

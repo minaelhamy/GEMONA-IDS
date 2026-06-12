@@ -54,6 +54,8 @@ class Product extends Model implements HasMedia
         'supermarket_base_price',
         'supermarket_margin_percent',
         'supermarket_candidate_count',
+        'supermarket_available',
+        'supermarket_available_quantity',
         'supermarket_synced_at',
         'manual_price_override',
 
@@ -95,6 +97,8 @@ class Product extends Model implements HasMedia
         'supermarket_base_price'       => 'decimal:6',
         'supermarket_margin_percent'   => 'decimal:4',
         'supermarket_candidate_count'  => 'integer',
+        'supermarket_available'        => 'boolean',
+        'supermarket_available_quantity' => 'integer',
         'supermarket_synced_at'        => 'datetime',
         'manual_price_override'        => 'boolean',
 
