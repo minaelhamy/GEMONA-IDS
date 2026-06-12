@@ -8,6 +8,8 @@ use Symfony\Component\Process\Process;
 
 class RefreshSupermarketCatalog extends Command
 {
+    private const MINIMUM_PYTHON_VERSION = '3.9.0';
+
     protected $signature = 'supermarket:refresh
         {--skip-scrape : Import the existing latest files without running the scraper}
         {--margin= : Margin percentage to pass to the importer}
@@ -41,9 +43,17 @@ class RefreshSupermarketCatalog extends Command
         $scraperRoot = $this->resolvePath(config('supermarkets.scraper_root'));
         $sources = config('supermarkets.sources', []);
 
-        if (!is_file($python)) {
+        if (Str::contains($python, DIRECTORY_SEPARATOR) && !is_file($python)) {
             $this->warn("Configured Python was not found at {$python}; falling back to python3.");
             $python = 'python3';
+        }
+
+        if (!$this->pythonIsSupported($python)) {
+            $this->error(sprintf(
+                'The supermarket scraper requires Python %s or newer. Configure SUPERMARKET_PYTHON in .env to a newer Python binary, or run with --skip-scrape to import existing data files only.',
+                self::MINIMUM_PYTHON_VERSION
+            ));
+            return self::FAILURE;
         }
 
         $crawl = array_merge(
@@ -83,9 +93,30 @@ class RefreshSupermarketCatalog extends Command
         return true;
     }
 
+    private function pythonIsSupported(string $python): bool
+    {
+        $process = new Process([
+            $python,
+            '-c',
+            'import sys; print(".".join(map(str, sys.version_info[:3])))',
+        ]);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            $this->error("Unable to run configured Python binary: {$python}");
+            $this->error($process->getErrorOutput());
+            return false;
+        }
+
+        $version = trim($process->getOutput());
+        $this->line("Using Python {$version}: {$python}");
+
+        return version_compare($version, self::MINIMUM_PYTHON_VERSION, '>=');
+    }
+
     private function resolvePath(string $path): string
     {
-        if (Str::startsWith($path, ['/']) || $path === 'python3') {
+        if (Str::startsWith($path, ['/']) || !Str::contains($path, DIRECTORY_SEPARATOR)) {
             return $path;
         }
 
