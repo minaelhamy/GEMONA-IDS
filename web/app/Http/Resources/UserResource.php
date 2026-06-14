@@ -16,7 +16,7 @@ class UserResource extends JsonResource
      */
     public function toArray($request): array
     {
-        $role = $this->roles->first();
+        $role = $this->effectiveRole;
 
         return [
             "id"               => $this->id,

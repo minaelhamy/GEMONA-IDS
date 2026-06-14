@@ -84,21 +84,23 @@ class LoginController extends Controller
 
         $this->token = $user->createToken('auth_token')->plainTextToken;
 
-        if (!isset($user->roles[0])) {
+        $role = $user->effectiveRole;
+
+        if (!$role) {
             return new JsonResponse([
                 'errors' => ['validation' => trans('all.message.role_exist')]
             ], 400);
         }
 
-        $permission        = PermissionResource::collection($this->permissionService->permission($user->roles[0]));
+        $permission        = PermissionResource::collection($this->permissionService->permission($role));
         $defaultPermission = AppLibrary::defaultPermission($permission);
-        $defaultMenu       = (object)AppLibrary::defaultMenu($this->menuService->menu($user->roles[0]), $defaultPermission);
+        $defaultMenu       = (object)AppLibrary::defaultMenu($this->menuService->menu($role), $defaultPermission);
 
         return new JsonResponse([
             'message'           => trans('all.message.login_success'),
             'token'             => $this->token,
             'user'              => new UserResource($user),
-            'menu'              => MenuResource::collection(collect($this->menuService->menu($user->roles[0]))),
+            'menu'              => MenuResource::collection(collect($this->menuService->menu($role))),
             'permission'        => $permission,
             'defaultPermission' => $defaultPermission,
             'defaultMenu'       => $defaultMenu,

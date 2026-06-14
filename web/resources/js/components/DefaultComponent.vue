@@ -65,6 +65,7 @@ export default {
         }
     },
     beforeMount() {
+        this.themeDefine(this.$route);
         this.displayModeDefine();
         this.$store.dispatch('frontendSetting/lists').then(res => {
             this.$store.dispatch("globalState/init", {
@@ -86,6 +87,9 @@ export default {
         },
     },
     methods: {
+        themeDefine: function (route) {
+            this.theme = route.meta.isFrontend === true ? "frontend" : "backend";
+        },
         displayModeDefine: function () {
             let dir = "ltr";
             const attributes = {
@@ -104,11 +108,7 @@ export default {
 
     watch: {
         $route(e) {
-            if (e.meta.isFrontend === true) {
-                this.theme = "frontend";
-            } else {
-                this.theme = "backend";
-            }
+            this.themeDefine(e);
         },
         displayMode() {
             this.displayModeDefine();

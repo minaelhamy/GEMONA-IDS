@@ -108,6 +108,13 @@ const router = createRouter({
     },
 });
 
+const isCustomerUser = () => {
+    const user = store.getters.authInfo || {};
+    const roleName = String(user.role_name || "").toLowerCase();
+
+    return roleName === "customer" || (!roleName && Number(user.role_id) === 2);
+};
+
 router.beforeEach((to, from, next) => {
     if (to.meta.auth === true) {
         if (!store.getters.authStatus) {
@@ -131,7 +138,7 @@ router.beforeEach((to, from, next) => {
             to.name === "auth.forgotPassword") &&
         store.getters.authStatus
     ) {
-        next({ name: "frontend.home" });
+        next({ name: isCustomerUser() ? "frontend.home" : "admin.dashboard" });
     } else {
         next();
     }

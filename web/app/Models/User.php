@@ -119,7 +119,18 @@ class User extends Authenticatable implements HasMedia
 
     public function getMyRoleAttribute()
     {
-        return $this->roles->pluck('id', 'id')->first();
+        return optional($this->effectiveRole)->id;
+    }
+
+    public function getEffectiveRoleAttribute()
+    {
+        if (!$this->relationLoaded('roles')) {
+            $this->load('roles');
+        }
+
+        return $this->roles->firstWhere('name', 'Admin')
+            ?? $this->roles->firstWhere('name', 'Employee')
+            ?? $this->roles->first();
     }
 
     public function getrole(): \Illuminate\Database\Eloquent\Relations\HasOne

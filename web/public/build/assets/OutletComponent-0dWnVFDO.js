@@ -1,1 +1,0 @@
-import{_ as o,r as t,o as n,k as r}from"./app-NNpz3Lcd.js";const s={name:"OutletComponent"};function c(a,p,_,m,u,f){const e=t("router-view");return n(),r(e)}const l=o(s,[["render",c]]);export{l as default};
