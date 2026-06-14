@@ -6,7 +6,9 @@ use App\Enums\Ask;
 use App\Enums\Status;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
 
 class RepairAdminUser extends Command
@@ -43,13 +45,24 @@ class RepairAdminUser extends Command
             ]
         );
 
-        if (!$user->hasRole($role->name)) {
-            $user->assignRole($role);
+        if (!$user->hasRole($role->name, 'sanctum')) {
+            $user->assignRole($role->name);
         }
 
+        $user->tokens()->delete();
+        if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
+
+        $passwordMatches = Hash::check($password, $user->password);
+
         $this->info("Admin user is ready: {$email}");
+        $this->line("User ID: {$user->id}");
+        $this->line("Status: {$user->status}");
+        $this->line('Roles: ' . $user->roles()->pluck('name')->implode(', '));
+        $this->line('Password check: ' . ($passwordMatches ? 'OK' : 'FAILED'));
         $this->warn('Log in once, then change this password from the admin profile.');
 
-        return self::SUCCESS;
+        return $passwordMatches ? self::SUCCESS : self::FAILURE;
     }
 }
