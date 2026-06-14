@@ -18,6 +18,7 @@ class ProductCategory extends Model implements HasMedia
 
     protected bool $fallbackExternalImageResolved = false;
     protected ?string $fallbackExternalImageUrl = null;
+    protected array $fallbackLocalImageUrls = [];
     protected $table = "product_categories";
     protected $fillable = ['name', 'slug', 'description', 'status', 'parent_id'];
     protected $casts = [
@@ -36,6 +37,9 @@ class ProductCategory extends Model implements HasMedia
             $category = $this->getMedia('product-category')->last();
             return $category->getUrl('thumb');
         }
+        if ($url = $this->fallbackLocalImageUrl('thumb')) {
+            return $url;
+        }
         if ($url = $this->fallbackExternalImageUrl()) {
             return Product::externalImageProxyUrl($url);
         }
@@ -48,10 +52,30 @@ class ProductCategory extends Model implements HasMedia
             $category = $this->getMedia('product-category')->last();
             return $category->getUrl('cover');
         }
+        if ($url = $this->fallbackLocalImageUrl('cover')) {
+            return $url;
+        }
         if ($url = $this->fallbackExternalImageUrl()) {
             return Product::externalImageProxyUrl($url);
         }
         return asset('images/default/category/cover.png');
+    }
+
+    private function fallbackLocalImageUrl(string $conversion): ?string
+    {
+        if (!array_key_exists($conversion, $this->fallbackLocalImageUrls)) {
+            $product = Product::query()
+                ->with('media')
+                ->where('product_category_id', $this->id)
+                ->where('status', Status::ACTIVE)
+                ->whereHas('media', fn ($query) => $query->where('collection_name', 'product'))
+                ->latest('id')
+                ->first();
+
+            $this->fallbackLocalImageUrls[$conversion] = $product?->{$conversion};
+        }
+
+        return $this->fallbackLocalImageUrls[$conversion];
     }
 
     private function fallbackExternalImageUrl(): ?string

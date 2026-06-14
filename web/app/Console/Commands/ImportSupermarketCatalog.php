@@ -13,6 +13,7 @@ use App\Models\ProductBrand;
 use App\Models\ProductVariation;
 use App\Models\ProductCategory;
 use App\Models\SupermarketProductSource;
+use App\Models\Unit;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
@@ -127,6 +128,7 @@ class ImportSupermarketCatalog extends Command
                     'sku' => 'GEM-' . $cluster['cluster_id'],
                     'product_category_id' => $categoryId,
                     'product_brand_id' => $brandId,
+                    'unit_id' => $this->unitId($name),
                     'status' => Status::ACTIVE,
                     'can_purchasable' => Ask::YES,
                     'show_stock_out' => Activity::ENABLE,
@@ -378,6 +380,58 @@ class ImportSupermarketCatalog extends Command
             'order' => 1,
         ]);
         $variation->save();
+    }
+
+    private function unitId(string $name): ?int
+    {
+        $packageSize = $this->packageSize($name);
+        if (!$packageSize) {
+            return $this->unitByCode('pc', 'Piece');
+        }
+
+        $normalized = Str::lower($packageSize);
+        $map = [
+            'kg' => ['Kilogram', 'kg'],
+            'g' => ['Gram', 'gm'],
+            'gm' => ['Gram', 'gm'],
+            'gram' => ['Gram', 'gm'],
+            'grams' => ['Gram', 'gm'],
+            'l' => ['Litre', 'lt'],
+            'ltr' => ['Litre', 'lt'],
+            'liter' => ['Litre', 'lt'],
+            'litre' => ['Litre', 'lt'],
+            'ml' => ['Milliliter', 'ml'],
+            'pcs' => ['Piece', 'pc'],
+            'pc' => ['Piece', 'pc'],
+            'pieces' => ['Piece', 'pc'],
+            'piece' => ['Piece', 'pc'],
+            'pack' => ['Pack', 'pack'],
+            'packs' => ['Pack', 'pack'],
+            'rolls' => ['Roll', 'roll'],
+            'sheets' => ['Sheet', 'sheet'],
+            'wipes' => ['Wipe', 'wipe'],
+            'bags' => ['Bag', 'bag'],
+            'sachets' => ['Sachet', 'sachet'],
+            'tabs' => ['Tablet', 'tab'],
+            'tablets' => ['Tablet', 'tab'],
+            'capsules' => ['Capsule', 'cap'],
+        ];
+
+        foreach ($map as $token => [$unitName, $code]) {
+            if (preg_match('/\b' . preg_quote($token, '/') . '\b/i', $normalized)) {
+                return $this->unitByCode($code, $unitName);
+            }
+        }
+
+        return $this->unitByCode('pc', 'Piece');
+    }
+
+    private function unitByCode(string $code, string $name): ?int
+    {
+        return Unit::firstOrCreate(
+            ['code' => $code],
+            ['name' => $name, 'status' => Status::ACTIVE]
+        )->id;
     }
 
     private function packageSize(string $name): ?string
