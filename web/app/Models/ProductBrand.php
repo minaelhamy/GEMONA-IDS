@@ -29,6 +29,9 @@ class ProductBrand extends Model implements HasMedia
             $brand = $this->getMedia('product-brand')->last();
             return $brand->getUrl('thumb');
         }
+        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
+            return $product->thumb;
+        }
         return asset('images/default/brand/thumb.png');
     }
 
@@ -37,6 +40,9 @@ class ProductBrand extends Model implements HasMedia
         if (!empty($this->getFirstMediaUrl('product-brand'))) {
             $brand = $this->getMedia('product-brand')->last();
             return $brand->getUrl('cover');
+        }
+        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
+            return $product->cover;
         }
         return asset('images/default/brand/cover.png');
     }

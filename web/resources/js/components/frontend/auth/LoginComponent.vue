@@ -205,7 +205,9 @@ export default {
                     alertService.success(res.data.message);
                     appService.recursiveRouter(router.options.routes, this.$store.getters.authPermission);
                     this.$store.dispatch("frontendWishlist/lists").then().catch();
-                    if (res.data.user && Number(res.data.user.role_id) !== 2) {
+                    const roleName = String(res.data.user?.role_name || "").toLowerCase();
+                    const isCustomer = roleName === "customer" || (!roleName && Number(res.data.user?.role_id) === 2);
+                    if (res.data.user && !isCustomer) {
                         router.push({ name: "admin.dashboard" });
                     } else if (this.carts.length > 0) {
                         router.push({ name: "frontend.checkout" });

@@ -1,1 +1,0 @@
-import{_ as o,r as n,o as t,k as r}from"./app-Z7owKHyA.js";const s={name:"PageComponent"};function a(c,p,_,m,f,i){const e=n("router-view");return t(),r(e)}const d=o(s,[["render",a]]);export{d as default};

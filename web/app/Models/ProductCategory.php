@@ -34,6 +34,9 @@ class ProductCategory extends Model implements HasMedia
             $category = $this->getMedia('product-category')->last();
             return $category->getUrl('thumb');
         }
+        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
+            return $product->thumb;
+        }
         return asset('images/default/category/thumb.png');
     }
 
@@ -42,6 +45,9 @@ class ProductCategory extends Model implements HasMedia
         if (!empty($this->getFirstMediaUrl('product-category'))) {
             $category = $this->getMedia('product-category')->last();
             return $category->getUrl('cover');
+        }
+        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
+            return $product->cover;
         }
         return asset('images/default/category/cover.png');
     }

@@ -9,6 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RepairAdminUser extends Command
@@ -45,9 +46,8 @@ class RepairAdminUser extends Command
             ]
         );
 
-        if (!$user->hasRole($role->name, 'sanctum')) {
-            $user->assignRole($role->name);
-        }
+        $role->syncPermissions(Permission::all());
+        $user->syncRoles([$role->name]);
 
         $user->tokens()->delete();
         if (Schema::hasTable('sessions') && Schema::hasColumn('sessions', 'user_id')) {
@@ -60,6 +60,7 @@ class RepairAdminUser extends Command
         $this->line("User ID: {$user->id}");
         $this->line("Status: {$user->status}");
         $this->line('Roles: ' . $user->roles()->pluck('name')->implode(', '));
+        $this->line('Admin permissions: ' . $role->permissions()->count());
         $this->line('Password check: ' . ($passwordMatches ? 'OK' : 'FAILED'));
         $this->warn('Log in once, then change this password from the admin profile.');
 

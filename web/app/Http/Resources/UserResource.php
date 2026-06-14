@@ -16,6 +16,8 @@ class UserResource extends JsonResource
      */
     public function toArray($request): array
     {
+        $role = $this->roles->first();
+
         return [
             "id"               => $this->id,
             "name"             => $this->name,
@@ -26,6 +28,7 @@ class UserResource extends JsonResource
             "currency_balance" => AppLibrary::currencyAmountFormat($this->balance),
             "image"            => $this->thumb,
             "role_id"          => $this->myRole,
+            "role_name"        => $role?->name,
             "country_code"     => $this->country_code,
             "order"            => $this->orders->count(),
             'create_date'      => AppLibrary::date($this->created_at),

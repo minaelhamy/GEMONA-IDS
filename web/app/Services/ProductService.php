@@ -338,7 +338,7 @@ class ProductService
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
-            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->withReviewRating()
                 ->withCount('orderCountable')
@@ -512,7 +512,7 @@ class ProductService
                 }
             }
 
-            $productCategory = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.status', 'products.product_category_id', 'products.product_brand_id', 'products.variation_price')->with('brand', 'variations')->where(function ($query) use ($request, $categories) {
+            $productCategory = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.status', 'products.product_category_id', 'products.product_brand_id', 'products.variation_price', 'products.external_image_url')->with('brand', 'variations')->where(function ($query) use ($request, $categories) {
                 if (count($categories)) {
                     $i = 0;
                     foreach ($categories as $category) {
@@ -548,7 +548,7 @@ class ProductService
                 $orderType   = 'desc';
             }
 
-            $products = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.product_category_id', 'products.product_brand_id', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+            $products = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.product_category_id', 'products.product_brand_id', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->withReviewRating()
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'brand', 'variations', 'reviews')
@@ -682,7 +682,7 @@ class ProductService
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
-            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->withReviewRating()
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'variations', 'reviews')
@@ -711,7 +711,7 @@ class ProductService
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
-            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->withReviewRating()
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'variations', 'reviews')
@@ -778,7 +778,7 @@ class ProductService
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
             if (count($productTags) > 0) {
-                return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+                return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                     ->withReviewRating()
                     ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                     ->with('media', 'variations', 'reviews', 'tags')
@@ -822,7 +822,7 @@ class ProductService
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
-            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status')
+            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->withReviewRating()
                 ->with('media', 'variations', 'reviews', 'wishlist')
                 ->whereHas('wishlist', function ($query) {
