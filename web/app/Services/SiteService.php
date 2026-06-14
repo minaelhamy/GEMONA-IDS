@@ -51,13 +51,13 @@ class SiteService
 
             $this->envService->addData([
                 'APP_DEBUG'              => $app_debug == Activity::ENABLE ? 'true' : 'false',
-                'TIMEZONE'               => $request->site_default_timezone,
-                'CURRENCY'               => $currency?->code,
-                'CURRENCY_SYMBOL'        => $currency?->symbol,
+                'TIMEZONE'               => $this->envValue($request->site_default_timezone),
+                'CURRENCY'               => $this->envValue($currency?->code),
+                'CURRENCY_SYMBOL'        => $this->envValue($currency?->symbol),
                 'CURRENCY_POSITION'      => $request->site_currency_position,
                 'CURRENCY_DECIMAL_POINT' => $request->site_digit_after_decimal_point,
-                'DATE_FORMAT'            => $request->site_date_format,
-                'TIME_FORMAT'            => $request->site_time_format,
+                'DATE_FORMAT'            => $this->envValue($request->site_date_format),
+                'TIME_FORMAT'            => $this->envValue($request->site_time_format),
                 'NON_PURCHASE_QUANTITY'  => $request->site_non_purchase_product_maximum_quantity
             ]);
 
@@ -67,5 +67,10 @@ class SiteService
             Log::info($exception->getMessage());
             throw new Exception(QueryExceptionLibrary::message($exception), 422);
         }
+    }
+
+    private function envValue(?string $value): string
+    {
+        return '"' . addcslashes((string) $value, "\\\"") . '"';
     }
 }
