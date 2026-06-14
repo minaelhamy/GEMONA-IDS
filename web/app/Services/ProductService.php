@@ -14,6 +14,7 @@ use App\Models\ProductTax;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Libraries\AppLibrary;
+use App\Models\ProductBrand;
 use App\Models\ProductCategory;
 use App\Models\ProductVariation;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +22,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\ProductRequest;
 use App\Http\Requests\PaginateRequest;
-use App\Models\ProductAttributeOption;
 use Picqer\Barcode\BarcodeGeneratorJPG;
 use App\Http\Requests\ChangeImageRequest;
 use App\Http\Requests\ProductOfferRequest;
@@ -338,13 +338,19 @@ class ProductService
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
-            return Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
+            $query = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->withReviewRating()
+                ->where(['status' => Status::ACTIVE]);
+
+            if ($rand > 0) {
+                return $query->orderByDesc('products.id')->limit($rand)->get();
+            }
+
+            return $query
                 ->withCount('orderCountable')
-                ->where(['status' => Status::ACTIVE])
                 ->orderBy('order_countable_count', 'desc')
-                ->randAndLimitOrOrderBy($rand, $orderColumn, $orderType)
+                ->orderBy($orderColumn, $orderType)
                 ->$method($methodValue);
         } catch (Exception $exception) {
             Log::info($exception->getMessage());
@@ -501,36 +507,54 @@ class ProductService
             ];
 
             $categories = [];
+            $categoryIds = [];
             if ($request->has('category')) {
                 if (!blank($request->category)) {
                     $categories = ProductCategory::where(['slug' => $request->category])->first();
                     if ($categories) {
                         $categories = $categories->descendantsAndSelf->toArray();
+                        $categoryIds = collect($categories)->pluck('id')->all();
                     } else {
                         $categories = [];
                     }
                 }
             }
 
-            $productCategory = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.status', 'products.product_category_id', 'products.product_brand_id', 'products.variation_price', 'products.external_image_url')->with('brand', 'variations')->where(function ($query) use ($request, $categories) {
-                if (count($categories)) {
-                    $i = 0;
-                    foreach ($categories as $category) {
-                        if ($i === 0) {
-                            $query->where('product_category_id', $category['id']);
-                        } else {
-                            $query->orWhere('product_category_id', $category['id']);
-                        }
-                        $i++;
-                    }
-                }
-            })->where(function ($query) use ($request, $customProductFilter, $customProductFilterMask) {
+            $baseQuery = Product::query()
+                ->select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.status', 'products.product_category_id', 'products.product_brand_id', 'products.variation_price', 'products.external_image_url')
+                ->active('products.status')
+                ->when(count($categoryIds), function ($query) use ($categoryIds) {
+                    $query->whereIn('product_category_id', $categoryIds);
+                })
+                ->where(function ($query) use ($request, $customProductFilter, $customProductFilterMask) {
                 foreach ($request->all() as $key => $req) {
-                    if (in_array($key, $customProductFilter)) {
+                    if (in_array($key, $customProductFilter) && !blank($req)) {
                         $query->where($customProductFilterMask[$key], 'like', '%' . $req . '%');
                     }
                 }
-            })->get();
+            });
+
+            $brands = ProductBrand::query()
+                ->select('product_brands.id', 'product_brands.name')
+                ->join('products', 'products.product_brand_id', '=', 'product_brands.id')
+                ->whereNotNull('products.product_brand_id')
+                ->where('products.status', Status::ACTIVE)
+                ->when(count($categoryIds), function ($query) use ($categoryIds) {
+                    $query->whereIn('products.product_category_id', $categoryIds);
+                })
+                ->where(function ($query) use ($request, $customProductFilter, $customProductFilterMask) {
+                    foreach ($request->all() as $key => $req) {
+                        if (in_array($key, $customProductFilter) && !blank($req)) {
+                            $query->where($customProductFilterMask[$key], 'like', '%' . $req . '%');
+                        }
+                    }
+                })
+                ->distinct()
+                ->orderBy('product_brands.name')
+                ->limit(200)
+                ->get();
+
+            $maxPrice = (clone $baseQuery)->max('products.variation_price');
 
             $perPage     = $request->post('per_page', 30);
             $orderColumn = 'products.name';
@@ -552,36 +576,20 @@ class ProductService
                 ->withReviewRating()
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'brand', 'variations', 'reviews')
-                ->where(function ($query) use ($request, $categories) {
-                    if (count($categories)) {
-                        $i = 0;
-                        foreach ($categories as $category) {
-                            if ($i === 0) {
-                                $query->where('product_category_id', $category['id']);
-                            } else {
-                                $query->orWhere('product_category_id', $category['id']);
-                            }
-                            $i++;
-                        }
-                    }
-                })->where(function ($query) use ($request) {
+                ->active('products.status')
+                ->when(count($categoryIds), function ($query) use ($categoryIds) {
+                    $query->whereIn('product_category_id', $categoryIds);
+                })
+                ->where(function ($query) use ($request) {
                     if (!blank($request->brand)) {
                         $brands = json_decode($request->brand);
                         if (count($brands)) {
-                            $i = 0;
-                            foreach ($brands as $brand) {
-                                if ($i === 0) {
-                                    $query->where('product_brand_id', $brand);
-                                } else {
-                                    $query->orWhere('product_brand_id', $brand);
-                                }
-                                $i++;
-                            }
+                            $query->whereIn('product_brand_id', $brands);
                         }
                     }
                 })->where(function ($query) use ($request, $customProductFilter, $customProductFilterMask) {
                     foreach ($request->all() as $key => $req) {
-                        if (in_array($key, $customProductFilter)) {
+                        if (in_array($key, $customProductFilter) && !blank($req)) {
                             $query->where($customProductFilterMask[$key], 'like', '%' . $req . '%');
                         }
                     }
@@ -617,51 +625,11 @@ class ProductService
                     }
                 })->paginate($perPage);
 
-            $variations = $productCategory->map(function ($query) {
-                return $query->variations;
-            });
-
-            $variationArray         = [];
-            $productAttributeOption = ProductAttributeOption::get()->pluck('name', 'id')->toArray();
-            if ($variations) {
-                foreach ($variations->toArray() as $variation) {
-                    if (count($variation)) {
-                        foreach ($variation as $v) {
-                            if (isset($variationArray[Str::slug($v['product_attribute']['name'], '_')])) {
-                                $status = true;
-                                foreach ($variationArray[Str::slug($v['product_attribute']['name'], '_')] as $va) {
-                                    if ($v['product_attribute_option_id'] == $va['product_attribute_option_id']) {
-                                        $status = false;
-                                    }
-                                }
-                                if ($status) {
-                                    $variationArray[Str::slug($v['product_attribute']['name'], '_')][] = [
-                                        'attribute_name'              => $v['product_attribute']['name'],
-                                        'attribute_option_name'       => isset($productAttributeOption[$v['product_attribute_option_id']]) ? $productAttributeOption[$v['product_attribute_option_id']] : '',
-                                        'product_attribute_id'        => (int) $v['product_attribute_id'],
-                                        "product_attribute_option_id" => (int) $v['product_attribute_option_id'],
-                                    ];
-                                }
-                            } else {
-                                $variationArray[Str::slug($v['product_attribute']['name'], '_')][] = [
-                                    'attribute_name'              => $v['product_attribute']['name'],
-                                    'attribute_option_name'       => isset($productAttributeOption[$v['product_attribute_option_id']]) ? $productAttributeOption[$v['product_attribute_option_id']] : '',
-                                    'product_attribute_id'        => (int) $v['product_attribute_id'],
-                                    "product_attribute_option_id" => (int) $v['product_attribute_option_id']
-                                ];
-                            }
-                        }
-                    }
-                }
-            }
-
             return collect([
                 'products'   => $products,
-                'brands'     => $productCategory->map(function ($query) {
-                    return $query->brand;
-                })->whereNotNull('id')->unique('id')->values()->all(),
-                'variations' => $variationArray,
-                'max_price'  => ceil($productCategory->max('variation_price') + 50),
+                'brands'     => $brands,
+                'variations' => [],
+                'max_price'  => ceil(((float) $maxPrice) + 50),
             ]);
         } catch (Exception $exception) {
             Log::info($exception->getMessage());

@@ -79,7 +79,7 @@ class ProductCategoryService
             $orderColumn = $request->get('order_column') ?? 'id';
             $orderType   = $request->get('order_type') ?? 'desc';
 
-            return ProductCategory::tree()->depthFirst()->with('parent_category', 'media', 'products')->where(function ($query) use ($requests) {
+            return ProductCategory::tree()->depthFirst()->with('parent_category', 'media')->where(function ($query) use ($requests) {
                 foreach ($requests as $key => $request) {
                     if (in_array($key, $this->productCateFilter)) {
                         $query->where($key, 'like', '%' . $request . '%');

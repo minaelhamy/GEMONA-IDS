@@ -28,8 +28,9 @@ class ImageProxyController extends Controller
 
         if (!Storage::disk('public')->exists($path)) {
             try {
-                $response = Http::timeout(20)
-                    ->retry(2, 250)
+                $response = Http::connectTimeout(2)
+                    ->timeout(5)
+                    ->retry(1, 150)
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (compatible; GEMONA-IDS/1.0)',
                         'Accept' => 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',

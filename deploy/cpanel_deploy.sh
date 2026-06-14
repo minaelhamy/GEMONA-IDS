@@ -164,6 +164,9 @@ run "$COMPOSER" install --no-dev --prefer-dist --optimize-autoloader --no-intera
 
 install_python_dependencies
 
+log "Running database migrations"
+php artisan migrate --force
+
 log "Refreshing Laravel caches"
 php artisan storage:link || true
 php artisan config:clear

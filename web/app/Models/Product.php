@@ -194,7 +194,12 @@ class Product extends Model implements HasMedia
 
     private function proxiedExternalImageUrl(): string
     {
-        return '/image-proxy?url=' . rawurlencode((string) $this->external_image_url);
+        return self::externalImageProxyUrl((string) $this->external_image_url);
+    }
+
+    public static function externalImageProxyUrl(string $url): string
+    {
+        return '/image-proxy?url=' . rawurlencode($url);
     }
 
     public function getBarcodeImageAttribute(): string

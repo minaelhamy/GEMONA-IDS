@@ -63,7 +63,8 @@ export default {
     mounted() {
         this.loading.isActive = true;
         this.$store.dispatch("frontendProductBrand/lists", {
-            paginate: 0,
+            paginate: 1,
+            per_page: 18,
             order_column: "id",
             order_type: "asc",
             status: statusEnum.ACTIVE,
@@ -75,4 +76,3 @@ export default {
     }
 }
 </script>
-

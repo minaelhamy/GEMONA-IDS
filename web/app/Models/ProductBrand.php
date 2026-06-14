@@ -13,6 +13,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class ProductBrand extends Model implements HasMedia
 {
     use InteractsWithMedia;
+    protected bool $fallbackExternalImageResolved = false;
+    protected ?string $fallbackExternalImageUrl = null;
     protected $table = "product_brands";
     protected $fillable = ['name', 'slug', 'description', 'status'];
     protected $casts = [
@@ -29,8 +31,8 @@ class ProductBrand extends Model implements HasMedia
             $brand = $this->getMedia('product-brand')->last();
             return $brand->getUrl('thumb');
         }
-        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
-            return $product->thumb;
+        if ($url = $this->fallbackExternalImageUrl()) {
+            return Product::externalImageProxyUrl($url);
         }
         return asset('images/default/brand/thumb.png');
     }
@@ -41,10 +43,25 @@ class ProductBrand extends Model implements HasMedia
             $brand = $this->getMedia('product-brand')->last();
             return $brand->getUrl('cover');
         }
-        if ($product = $this->products()->whereNotNull('external_image_url')->latest('id')->first()) {
-            return $product->cover;
+        if ($url = $this->fallbackExternalImageUrl()) {
+            return Product::externalImageProxyUrl($url);
         }
         return asset('images/default/brand/cover.png');
+    }
+
+    private function fallbackExternalImageUrl(): ?string
+    {
+        if (!$this->fallbackExternalImageResolved) {
+            $this->fallbackExternalImageUrl = Product::query()
+                ->where('product_brand_id', $this->id)
+                ->where('status', Status::ACTIVE)
+                ->whereNotNull('external_image_url')
+                ->latest('id')
+                ->value('external_image_url');
+            $this->fallbackExternalImageResolved = true;
+        }
+
+        return $this->fallbackExternalImageUrl;
     }
 
     public function registerMediaConversions(?Media $media = null): void

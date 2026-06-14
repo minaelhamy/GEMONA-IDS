@@ -67,7 +67,8 @@ export default {
     mounted() {
         this.loading.isActive = true;
         this.$store.dispatch("frontendProductCategory/lists", {
-            paginate: 0,
+            paginate: 1,
+            per_page: 18,
             order_column: "id",
             order_type: "asc",
             parent_id: null,
@@ -80,4 +81,3 @@ export default {
     },
 }
 </script>
-
