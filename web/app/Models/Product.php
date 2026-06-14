@@ -123,7 +123,7 @@ class Product extends Model implements HasMedia
             return asset($this->getFirstMediaUrl('product'));
         }
         if (!empty($this->external_image_url)) {
-            return $this->external_image_url;
+            return $this->proxiedExternalImageUrl();
         }
         return asset('images/default/product/thumb.png');
     }
@@ -137,7 +137,7 @@ class Product extends Model implements HasMedia
                 $response[] = $image['original_url'];
             }
         } elseif (!empty($this->external_image_url)) {
-            $response[] = $this->external_image_url;
+            $response[] = $this->proxiedExternalImageUrl();
         }
         return $response;
     }
@@ -149,7 +149,7 @@ class Product extends Model implements HasMedia
             return $product->getUrl('thumb');
         }
         if (!empty($this->external_image_url)) {
-            return $this->external_image_url;
+            return $this->proxiedExternalImageUrl();
         }
         return asset('images/default/product/thumb.png');
     }
@@ -161,7 +161,7 @@ class Product extends Model implements HasMedia
             return $product->getUrl('cover');
         }
         if (!empty($this->external_image_url)) {
-            return $this->external_image_url;
+            return $this->proxiedExternalImageUrl();
         }
         return asset('images/default/product/cover.png');
     }
@@ -173,7 +173,7 @@ class Product extends Model implements HasMedia
             return $product->getUrl('preview');
         }
         if (!empty($this->external_image_url)) {
-            return $this->external_image_url;
+            return $this->proxiedExternalImageUrl();
         }
         return asset('images/default/product/preview.png');
     }
@@ -187,9 +187,14 @@ class Product extends Model implements HasMedia
                 $response[] = $image->getUrl('preview');
             }
         } elseif (!empty($this->external_image_url)) {
-            $response[] = $this->external_image_url;
+            $response[] = $this->proxiedExternalImageUrl();
         }
         return $response;
+    }
+
+    private function proxiedExternalImageUrl(): string
+    {
+        return '/image-proxy?url=' . rawurlencode((string) $this->external_image_url);
     }
 
     public function getBarcodeImageAttribute(): string

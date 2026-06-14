@@ -203,16 +203,15 @@ export default {
                 this.$store.dispatch('login', this.form).then((res) => {
                     this.loading.isActive = false;
                     alertService.success(res.data.message);
+                    appService.recursiveRouter(router.options.routes, this.$store.getters.authPermission);
                     this.$store.dispatch("frontendWishlist/lists").then().catch();
-                    if (this.carts.length > 0) {
+                    if (res.data.user && Number(res.data.user.role_id) !== 2) {
+                        router.push({ name: "admin.dashboard" });
+                    } else if (this.carts.length > 0) {
                         router.push({ name: "frontend.checkout" });
                     } else {
                         router.push({ name: "frontend.home" });
                     }
-                    router.push({ name: "frontend.home" });
-                    setTimeout(() => {
-                        appService.recursiveRouter(router.options.routes, this.$store.getters.authPermission);
-                    }, 1000);
                 }).catch((err) => {
                     this.loading.isActive = false;
                     this.errors = err.response.data.errors;
