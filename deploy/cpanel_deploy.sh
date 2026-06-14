@@ -5,6 +5,7 @@ REPOPATH="/home/shargtvh/repositories/GEMONA-IDS"
 DEPLOYPATH="/home/shargtvh/gemona_ids_app"
 COMPOSER=""
 LOCAL_COMPOSER="/home/shargtvh/bin/composer"
+SCRAPER_PYTHON=""
 
 log() {
     printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1"
@@ -57,6 +58,63 @@ install_local_composer() {
     COMPOSER="$LOCAL_COMPOSER"
 }
 
+env_value() {
+    local key="$1"
+    local file="$DEPLOYPATH/.env"
+
+    if [ ! -f "$file" ]; then
+        return 1
+    fi
+
+    awk -F= -v key="$key" '$1 == key { value = substr($0, index($0, "=") + 1); gsub(/^["'\'']|["'\'']$/, "", value); print value; exit }' "$file"
+}
+
+find_scraper_python() {
+    local configured
+    configured="$(env_value SUPERMARKET_PYTHON || true)"
+
+    for candidate in \
+        "$configured" \
+        /opt/alt/python312/bin/python3 \
+        /opt/alt/python311/bin/python3 \
+        /opt/alt/python310/bin/python3 \
+        /opt/alt/python39/bin/python3 \
+        python3
+    do
+        if [ -z "$candidate" ]; then
+            continue
+        fi
+
+        if "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1; then
+            SCRAPER_PYTHON="$candidate"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+install_python_dependencies() {
+    if [ ! -f "$REPOPATH/requirements.txt" ]; then
+        log "No scraper requirements.txt found; skipping Python dependency install"
+        return 0
+    fi
+
+    if ! find_scraper_python; then
+        log "Python 3.9+ was not found; skipping scraper dependency install"
+        return 0
+    fi
+
+    log "Installing scraper Python dependencies with $SCRAPER_PYTHON"
+    "$SCRAPER_PYTHON" -m pip --version >/dev/null 2>&1 || "$SCRAPER_PYTHON" -m ensurepip --user >/dev/null 2>&1 || true
+
+    if "$SCRAPER_PYTHON" -m pip --version >/dev/null 2>&1; then
+        "$SCRAPER_PYTHON" -m pip install --user --upgrade -r "$REPOPATH/requirements.txt" || log "Python dependency install failed; run it manually before supermarket:refresh"
+    else
+        log "pip is not available for $SCRAPER_PYTHON; run Python dependency install manually before supermarket:refresh"
+    fi
+}
+
 log "Starting GEMONA IDS deployment"
 log "Repository: $REPOPATH"
 log "Deploy path: $DEPLOYPATH"
@@ -103,6 +161,8 @@ fi
 log "Installing Composer dependencies with $COMPOSER"
 cd "$DEPLOYPATH"
 run "$COMPOSER" install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+
+install_python_dependencies
 
 log "Refreshing Laravel caches"
 php artisan storage:link || true
