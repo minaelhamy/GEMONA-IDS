@@ -92,15 +92,16 @@ class LoginController extends Controller
             ], 400);
         }
 
+        $menu              = $this->menuService->menu($role);
         $permission        = PermissionResource::collection($this->permissionService->permission($role));
         $defaultPermission = AppLibrary::defaultPermission($permission);
-        $defaultMenu       = (object)AppLibrary::defaultMenu($this->menuService->menu($role), $defaultPermission);
+        $defaultMenu       = (object)AppLibrary::defaultMenu($menu, $defaultPermission);
 
         return new JsonResponse([
             'message'           => trans('all.message.login_success'),
             'token'             => $this->token,
             'user'              => new UserResource($user),
-            'menu'              => MenuResource::collection(collect($this->menuService->menu($role))),
+            'menu'              => MenuResource::collection(collect($menu)),
             'permission'        => $permission,
             'defaultPermission' => $defaultPermission,
             'defaultMenu'       => $defaultMenu,
