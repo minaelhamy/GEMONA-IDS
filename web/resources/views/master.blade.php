@@ -10,11 +10,32 @@
     <!-- CUSTOM STYLE -->
     <link rel="stylesheet" href="{{ asset('themes/default/css/custom.css') }}">
     <!-- PAGE TITLE -->
-    <title>{{ Settings::group('company')->get('company_name') }}</title>
+    @php
+        $siteName = Settings::group('company')->get('company_name') ?: config('app.name');
+        $siteDescription = 'GEMONA IDS grocery and supermarket products delivered from Egypt.';
+    @endphp
+    <title>{{ $siteName }}</title>
+    <meta name="description" content="{{ $siteDescription }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
 
     <!-- FAV ICON -->
-    <link rel="icon" type="image" href="{{ $favicon }}">
-    
+    <link rel="icon" type="image/png" href="{{ $favicon }}">
+    <link rel="shortcut icon" href="{{ $favicon }}">
+    <link rel="apple-touch-icon" href="{{ $favicon }}">
+
+    <!-- SOCIAL SHARING -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:title" content="{{ $siteName }}">
+    <meta property="og:description" content="{{ $siteDescription }}">
+    <meta property="og:url" content="{{ $canonicalUrl }}">
+    <meta property="og:image" content="{{ $socialImage }}">
+    <meta property="og:image:secure_url" content="{{ $socialImage }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $siteName }}">
+    <meta name="twitter:description" content="{{ $siteDescription }}">
+    <meta name="twitter:image" content="{{ $socialImage }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @if (!blank($analytics))
