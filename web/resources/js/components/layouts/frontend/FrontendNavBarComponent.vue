@@ -35,11 +35,14 @@
                         </li>
 
                         <li class="header-nav-item">
-                            <button type="button" class="header-nav-menu down-arrow">
+                            <button type="button" class="header-nav-menu down-arrow"
+                                :aria-expanded="categoryMenuOpen"
+                                @click.prevent="categoryMenuOpen = !categoryMenuOpen">
                                 {{ $t('label.categories') }}
                             </button>
                             <div
-                                class="fixed top-[64px] left-0 z-10 w-full origin-top scale-y-0 transition-all duration-300">
+                                class="fixed top-[64px] left-0 z-10 w-full origin-top transition-all duration-300"
+                                :class="categoryMenuOpen ? 'scale-y-100' : 'scale-y-0'">
                                 <div class="container">
                                     <div class="w-full rounded-b-2xl shadow-paper bg-white overflow-hidden">
                                         <div class="max-h-[70vh] overflow-y-auto thin-scrolling p-5">
@@ -47,6 +50,7 @@
                                                 <div v-for="category in categories" :key="category.id || category.slug" class="self-start">
                                                     <router-link
                                                         :to="{ name: 'frontend.product', query: { category: category.slug } }"
+                                                        @click="categoryMenuOpen = false"
                                                         class="block text-sm font-semibold capitalize pb-2 border-b border-slate-200 transition-all duration-300 hover:text-primary">
                                                         {{ category.name }}
                                                     </router-link>
@@ -339,6 +343,7 @@ export default {
             },
             categoryTabStatus: false,
             activeTab: null,
+            categoryMenuOpen: false,
             searchProduct: "",
             orderNotificationStatus: false,
             orderNotificationMessage: "",
@@ -368,7 +373,11 @@ export default {
             return this.$store.getters['frontendLanguage/lists'];
         },
         categories: function () {
-            return this.$store.getters['frontendProductCategory/trees'];
+            const trees = this.$store.getters['frontendProductCategory/trees'];
+            if (Array.isArray(trees) && trees.length > 0) {
+                return trees;
+            }
+            return this.$store.getters['frontendProductCategory/lists'];
         },
         wishlists: function () {
             return this.$store.getters['frontendWishlist/lists'];
@@ -459,6 +468,12 @@ export default {
         }).catch((err) => {
             this.loading.isActive = false;
         });
+        this.$store.dispatch("frontendProductCategory/lists", {
+            paginate: 0,
+            order_column: "name",
+            order_type: "asc",
+            status: statusEnum.ACTIVE,
+        }).then().catch();
 
         if (this.logged) {
             this.loading.isActive = true;

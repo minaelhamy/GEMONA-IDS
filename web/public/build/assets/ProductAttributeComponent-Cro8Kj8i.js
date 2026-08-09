@@ -1,1 +1,0 @@
-import{_ as t,r as e,o as r,k as n}from"./app-DrG7oe1J.js";const c={name:"ProductAttributeComponent"};function s(a,p,_,u,i,m){const o=e("router-view");return r(),n(o)}const f=t(c,[["render",s]]);export{f as default};

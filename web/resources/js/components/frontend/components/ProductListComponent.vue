@@ -1,5 +1,5 @@
 <template>
-    <div v-if="products.length > 0" v-for="product in products"
+    <div v-if="displayProducts.length > 0" v-for="product in displayProducts"
         class="sm:p-2 miron rounded-2xl sm:shadow-card transition-all duration-300 sm:hover:shadow-hover group">
         <div class="relative overflow-hidden rounded-xl isolate">
             <label
@@ -67,6 +67,16 @@ export default {
     },
     props: {
         "products": "object",
+    },
+    computed: {
+        displayProducts: function () {
+            if (!this.products || !this.products.length) {
+                return [];
+            }
+            return this.products.filter((product) => {
+                return product.cover && !product.cover.includes('/images/default/product/');
+            });
+        },
     },
     data() {
         return {

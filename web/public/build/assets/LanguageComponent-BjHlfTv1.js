@@ -1,0 +1,1 @@
+import{_ as o,r as n,o as t,k as r}from"./app-DAEVVJCj.js";const a={name:"LanguageComponent"};function s(c,p,_,m,u,f){const e=n("router-view");return t(),r(e)}const d=o(a,[["render",s]]);export{d as default};
