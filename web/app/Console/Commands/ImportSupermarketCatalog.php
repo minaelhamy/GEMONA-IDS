@@ -131,14 +131,14 @@ class ImportSupermarketCatalog extends Command
                     'unit_id' => $this->unitId($name),
                     'status' => Status::ACTIVE,
                     'can_purchasable' => Ask::YES,
-                    'show_stock_out' => Activity::ENABLE,
+                    'show_stock_out' => Activity::DISABLE,
                     'maximum_purchase_quantity' => 10,
                     'low_stock_quantity_warning' => 1,
                     'refundable' => Ask::YES,
                     'description' => $description,
                     'shipping_type' => ShippingType::FREE,
                     'shipping_cost' => 0,
-                    'external_image_url' => $canonical['image_url'] ?? null,
+                    'external_image_url' => $this->imageUrlFor($canonical, $candidateRows),
                 ];
 
                 $payload = (!$isNew && $this->option('prices-only'))
@@ -234,8 +234,26 @@ class ImportSupermarketCatalog extends Command
         usort($candidateRows, fn ($a, $b) => ((float) ($a['price'] ?? PHP_FLOAT_MAX)) <=> ((float) ($b['price'] ?? PHP_FLOAT_MAX)));
         $canonical = $candidateRows[0];
         $canonical['name'] = $cluster['canonical_name'] ?? $canonical['name'] ?? null;
+        $canonical['image_url'] = $this->imageUrlFor($canonical, $candidateRows);
 
         return empty($canonical['name']) ? null : $canonical;
+    }
+
+    private function imageUrlFor(array $canonical, array $candidateRows): ?string
+    {
+        $imageUrl = trim((string) ($canonical['image_url'] ?? ''));
+        if ($imageUrl !== '') {
+            return $imageUrl;
+        }
+
+        foreach ($candidateRows as $row) {
+            $imageUrl = trim((string) ($row['image_url'] ?? ''));
+            if ($imageUrl !== '') {
+                return $imageUrl;
+            }
+        }
+
+        return null;
     }
 
     private function categoryId(array $path): ?int

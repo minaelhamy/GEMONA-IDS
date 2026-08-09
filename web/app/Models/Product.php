@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\Activity;
+use App\Enums\Ask;
 use App\Enums\Status;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -115,6 +117,33 @@ class Product extends Model implements HasMedia
             return $query->inRandomOrder()->limit($rand);
         }
         return $query->orderBy($orderColumn, $orderType);
+    }
+
+    public function storefrontStock(?int $stockItemsQuantity = null): int
+    {
+        if ($this->source_type === 'supermarket') {
+            return $this->supermarketOrderableQuantity();
+        }
+
+        if ($this->show_stock_out != Activity::DISABLE) {
+            return 0;
+        }
+
+        if ($this->can_purchasable == Ask::NO) {
+            return (int) env('NON_PURCHASE_QUANTITY', 100);
+        }
+
+        return max(0, (int) ($stockItemsQuantity ?? $this->stock_items_sum_quantity ?? 0));
+    }
+
+    public function supermarketOrderableQuantity(): int
+    {
+        return max(
+            (int) ($this->supermarket_available_quantity ?? 0),
+            (int) ($this->maximum_purchase_quantity ?? 0),
+            (int) env('NON_PURCHASE_QUANTITY', 100),
+            1
+        );
     }
 
     public function getImageAttribute(): string

@@ -41,26 +41,28 @@
                             <div
                                 class="fixed top-[64px] left-0 z-10 w-full origin-top scale-y-0 transition-all duration-300">
                                 <div class="container">
-                                    <div class="w-full rounded-b-2xl shadow-paper bg-white">
-                                        <nav class="w-full flex items-center justify-center">
+                                    <div class="w-full rounded-b-2xl shadow-paper bg-white overflow-hidden">
+                                        <div class="flex items-start">
+                                        <nav class="w-72 max-h-[70vh] overflow-y-auto thin-scrolling border-r border-gray-100 py-3">
                                             <router-link v-for="(category, index) in categories" :key="index"
                                                 :to="{ name: 'frontend.product', query: { category: category.slug } }"
                                                 @mouseover.prevent="activeTab = 'category_' + category.slug"
-                                                class="capitalize text-sm font-semibold tracking-wide px-5 py-4 transition-all duration-300 relative before:content-[''] before:absolute before:bottom-0 before:left-0 before:h-0.5 before:bg-primary hover:text-primary"
-                                                :class="{ 'text-primary before:w-full before:transition-all before:duration-300': activeTab === 'category_' + category.slug }">
+                                                class="block capitalize text-sm font-semibold tracking-wide px-5 py-3 transition-all duration-300 border-l-2 border-transparent hover:text-primary hover:bg-[#FFF4F1]"
+                                                :class="{ 'text-primary bg-[#FFF4F1] border-primary': activeTab === 'category_' + category.slug }">
                                                 {{ category.name }}
                                             </router-link>
                                         </nav>
+                                        <div class="flex-1 min-w-0">
                                         <div v-for="category in categories">
                                             <div v-if="category.children.length > 0"
                                                 :class="{ 'block': activeTab === 'category_' + category.slug, 'hidden': activeTab !== 'category_' + category.slug }"
-                                                class="flex items-start gap-5 pb-5 border-t border-gray-200">
-                                                <div class="w-60 h-80 flex-shrink-0 pt-5 ltr:pl-5 rtl:pr-5">
+                                                class="flex items-start gap-5 p-5">
+                                                <div class="w-56 h-80 flex-shrink-0">
                                                     <img class="w-full h-full object-top object-cover rounded-lg"
                                                         :src="category.cover" alt="category" />
                                                 </div>
-                                                <div class="w-full h-80 thin-scrolling pt-5 ltr:pr-5 rtl:pl-5">
-                                                    <div class="w-full grid gap-5 grid-cols-3">
+                                                <div class="w-full max-h-[70vh] overflow-y-auto thin-scrolling">
+                                                    <div class="w-full grid gap-5 grid-cols-3 xl:grid-cols-4">
                                                         <div v-for="children in category.children" class="self-start">
                                                             <h3
                                                                 class="text-sm font-semibold capitalize pb-3 border-b border-slate-200">
@@ -80,6 +82,8 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                        </div>
+                                        </div>
                                         </div>
                                     </div>
                                 </div>
