@@ -1,1 +1,0 @@
-import{_ as e,r as n,o as t,k as r}from"./app-DU5x0_rd.js";const s={name:"RoleComponent"};function c(a,p,_,m,f,i){const o=n("router-view");return t(),r(o)}const u=e(s,[["render",c]]);export{u as default};

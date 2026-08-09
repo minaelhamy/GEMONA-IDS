@@ -34,6 +34,8 @@
                     </label>
                     <input v-model="form.country" :class="errors.country ? 'invalid' : ''" id="formCountry" type="text"
                         list="signupCountries"
+                        @input="countryChange($event.target.value)"
+                        @change="countryChange($event.target.value)"
                         class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
                     <datalist id="signupCountries">
                         <option v-for="country in organizationCountries" :key="country" :value="country" />
@@ -241,6 +243,29 @@ export default {
             this.flag = e.flag_emoji;
             this.form.country_code = e.calling_code;
         },
+        normalizeCountryName: function (country) {
+            return String(country || "")
+                .toLowerCase()
+                .replace(/\([^)]*\)/g, "")
+                .replace(/[^a-z0-9]+/g, " ")
+                .trim();
+        },
+        countryChange: function (country) {
+            const selectedCountry = this.normalizeCountryName(country);
+
+            if (!selectedCountry) {
+                return;
+            }
+
+            const countryCode = this.countryCodes.find((item) => {
+                const countryName = this.normalizeCountryName(item.country_name);
+                return countryName === selectedCountry;
+            });
+
+            if (countryCode) {
+                this.countryCodeChange(countryCode);
+            }
+        },
         selectedOrganization: function () {
             return this.organizations.find((organization) => Number(organization.id) === Number(this.form.organization_id));
         },
@@ -248,6 +273,7 @@ export default {
             const organization = this.selectedOrganization();
             if (organization) {
                 this.form.country = organization.country || this.form.country;
+                this.countryChange(this.form.country);
                 this.form.address = organization.address || this.form.address;
             }
         },
