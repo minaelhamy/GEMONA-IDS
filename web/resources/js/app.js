@@ -17,6 +17,7 @@ import "../../public/themes/default/fonts/fontawesome/fontawesome.css";
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { createHead } from '@vueuse/head';
 import VueApexCharts from "vue3-apexcharts";
+import PasswordFieldComponent from "./components/shared/PasswordFieldComponent.vue";
 const head = createHead();
 
 const toastOptions = {
@@ -57,6 +58,7 @@ axios.interceptors.request.use(
 
 const app = createApp(DefaultComponent);
 app.component('vue-select', VueNextSelect)
+app.component('password-field', PasswordFieldComponent)
 app.use(router)
 app.use(store)
 app.use(VueSimpleAlert)

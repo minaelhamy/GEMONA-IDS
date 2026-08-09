@@ -117,9 +117,9 @@
                                 <label for="password" class="db-field-title required">{{
                                     $t("label.password")
                                     }}</label>
-                                <input v-model="password.props.form.password"
-                                    v-bind:class="password.errors.password ? 'invalid' : ''" type="password"
-                                    id="password" class="db-field-control" autocomplete="off" />
+                                <password-field v-model="password.props.form.password"
+                                    :invalid="!!password.errors.password" id="password"
+                                    input-class="db-field-control" autocomplete="off" />
                                 <small class="db-field-alert" v-if="password.errors.password">{{
                                     password.errors.password[0]
                                     }}</small>
@@ -129,9 +129,9 @@
                                 <label for="password" class="db-field-title required">{{
                                     $t("label.confirm_password")
                                     }}</label>
-                                <input v-model="password.props.form.password_confirmation"
-                                    v-bind:class="password.errors.password_confirmation ? 'invalid' : ''"
-                                    type="password" id="confirm_password" class="db-field-control" autocomplete="off" />
+                                <password-field v-model="password.props.form.password_confirmation"
+                                    :invalid="!!password.errors.password_confirmation" id="confirm_password"
+                                    input-class="db-field-control" autocomplete="off" />
                                 <small class="db-field-alert" v-if="password.errors.password_confirmation">{{
                                     password.errors.password_confirmation[0]
                                     }}</small>

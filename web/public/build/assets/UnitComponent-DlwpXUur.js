@@ -1,0 +1,1 @@
+import{_ as e,r as n,o as t,k as r}from"./app-D1Z6edzg.js";const s={name:"UnitComponent"};function c(a,p,_,i,m,f){const o=n("router-view");return t(),r(o)}const d=e(s,[["render",c]]);export{d as default};

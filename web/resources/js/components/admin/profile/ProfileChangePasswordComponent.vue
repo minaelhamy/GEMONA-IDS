@@ -16,8 +16,8 @@
                             <label for="old_password" class="db-field-title required">
                                 {{ $t('label.old_password') }}
                             </label>
-                            <input v-model="form.old_password" v-bind:class="errors.old_password ? 'invalid' : ''"
-                                id="old_password" type="password" class="db-field-control">
+                            <password-field v-model="form.old_password" :invalid="!!errors.old_password"
+                                id="old_password" input-class="db-field-control" />
                             <small class="db-field-alert" v-if="errors.old_password">
                                 {{ errors.old_password[0] }}
                             </small>
@@ -27,8 +27,8 @@
                             <label for="new_password" class="db-field-title required">
                                 {{ $t("label.new_password") }}
                             </label>
-                            <input v-model="form.new_password" v-bind:class="errors.new_password ? 'invalid' : ''" type="password"
-                                id="new_password" class="db-field-control" autocomplete="off" />
+                            <password-field v-model="form.new_password" :invalid="!!errors.new_password"
+                                id="new_password" input-class="db-field-control" autocomplete="off" />
                             <small class="db-field-alert" v-if="errors.new_password">
                                 {{ errors.new_password[0] }}
                             </small>
@@ -38,9 +38,8 @@
                             <label for="confirm_password" class="db-field-title required">
                                 {{ $t("label.confirm_password") }}
                             </label>
-                            <input v-model="form.confirm_password"
-                                v-bind:class="errors.confirm_password ? 'invalid' : ''" type="password"
-                                id="confirm_password" class="db-field-control" autocomplete="off" />
+                            <password-field v-model="form.confirm_password" :invalid="!!errors.confirm_password"
+                                id="confirm_password" input-class="db-field-control" autocomplete="off" />
                             <small class="db-field-alert" v-if="errors.confirm_password">
                                 {{ errors.confirm_password[0] }}
                             </small>

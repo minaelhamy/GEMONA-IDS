@@ -96,8 +96,8 @@
                         <label for="password" class="db-field-title required">{{
                             $t("label.password")
                         }}</label>
-                        <input v-model="props.form.password" v-bind:class="errors.password ? 'invalid' : ''" type="password"
-                            id="password" class="db-field-control" autocomplete="off" />
+                        <password-field v-model="props.form.password" :invalid="!!errors.password"
+                            id="password" input-class="db-field-control" autocomplete="off" />
                         <small class="db-field-alert" v-if="errors.password">{{
                             errors.password[0]
                         }}</small>
@@ -107,9 +107,9 @@
                         <label for="password_confirmation" class="db-field-title required">{{
                             $t("label.password_confirmation")
                         }}</label>
-                        <input v-model="props.form.password_confirmation"
-                            v-bind:class="errors.password_confirmation ? 'invalid' : ''" type="password"
-                            id="password_confirmation" class="db-field-control" autocomplete="off" />
+                        <password-field v-model="props.form.password_confirmation"
+                            :invalid="!!errors.password_confirmation" id="password_confirmation"
+                            input-class="db-field-control" autocomplete="off" />
                         <small class="db-field-alert" v-if="errors.password_confirmation">{{
                             errors.password_confirmation[0]
                         }}</small>

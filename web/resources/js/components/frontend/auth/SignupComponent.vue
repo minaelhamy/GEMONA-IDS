@@ -129,8 +129,8 @@
                     <label for="formPassword" class="text-sm font-medium capitalize mb-1 field-title required">
                         {{ $t('label.password') }}
                     </label>
-                    <input v-model="form.password" :class="errors.password ? 'invalid' : ''" id="formPassword" type="password"
-                        class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
+                    <password-field v-model="form.password" :invalid="!!errors.password" id="formPassword"
+                        input-class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
                     <small class="db-field-alert" v-if="errors.password">{{ errors.password[0] }}</small>
                 </div>
             </div>

@@ -7,16 +7,16 @@
             <div class="row">
                 <div class="col-12">
                     <label for="old_password" class="field-title required">{{ $t('label.old_password') }}</label>
-                    <input type="password" id="old_password" v-model="form.old_password"
-                        v-bind:class="errors.old_password ? 'invalid' : ''" class="field-control">
+                    <password-field id="old_password" v-model="form.old_password"
+                        :invalid="!!errors.old_password" input-class="field-control" />
                     <small class="db-field-alert" v-if="errors.old_password">
                         {{ errors.old_password[0] }}
                     </small>
                 </div>
                 <div class="col-12 md:col-6">
                     <label for="new_password" class="field-title required">{{ $t('label.new_password') }}</label>
-                    <input type="password" id="new_password" v-model="form.new_password"
-                        v-bind:class="errors.new_password ? 'invalid' : ''" class="field-control">
+                    <password-field id="new_password" v-model="form.new_password"
+                        :invalid="!!errors.new_password" input-class="field-control" />
                     <small class="db-field-alert" v-if="errors.new_password">
                         {{ errors.new_password[0] }}
                     </small>
@@ -24,8 +24,8 @@
                 <div class="col-12 md:col-6">
                     <label for="password_confirmation" class="field-title required">{{ $t('label.password_confirmation')
                     }}</label>
-                    <input type="password" id="password_confirmation" v-model="form.confirm_password"
-                        v-bind:class="errors.confirm_password ? 'invalid' : ''" class="field-control">
+                    <password-field id="password_confirmation" v-model="form.confirm_password"
+                        :invalid="!!errors.confirm_password" input-class="field-control" />
                     <small class="db-field-alert" v-if="errors.confirm_password">
                         {{ errors.confirm_password[0] }}
                     </small>

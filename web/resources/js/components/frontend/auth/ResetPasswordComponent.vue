@@ -11,17 +11,17 @@
             <div class="mb-6">
                 <label for="formPassword" class="field-title required">{{
                     $t('label.new_password') }}</label>
-                <input v-model="form.password" :class="errors.password ? 'invalid' : ''" id="formPassword" type="password"
-                    class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
+                <password-field v-model="form.password" :invalid="!!errors.password" id="formPassword"
+                    input-class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
                 <small class="db-field-alert" v-if="errors.password">{{ errors.password[0] }}</small>
             </div>
             <div class="mb-6">
                 <label for="password_confirmation" class="field-title required">{{
                     $t('label.confirm_password')
                 }}</label>
-                <input v-model="form.password_confirmation" :class="errors.password_confirmation ? 'invalid' : ''"
-                    id="password_confirmation" type="password"
-                    class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
+                <password-field v-model="form.password_confirmation" :invalid="!!errors.password_confirmation"
+                    id="password_confirmation"
+                    input-class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
                 <small class="db-field-alert" v-if="errors.password_confirmation">{{ errors.password_confirmation[0]
                 }}</small>
             </div>
