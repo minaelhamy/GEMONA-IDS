@@ -1,1 +1,0 @@
-import{_ as o,r as n,o as r,k as t}from"./app-AY0HQ_lt.js";const c={name:"CurrencyComponent"};function s(a,p,_,m,u,f){const e=n("router-view");return r(),t(e)}const C=o(c,[["render",s]]);export{C as default};

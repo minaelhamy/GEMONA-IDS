@@ -24,16 +24,16 @@
                     </router-link>
 
                     <router-link v-on:click="hideTarget('mobile-sidebar-canvas', 'canvas-active')"
+                        v-if="topMenuPages.length > 0" v-for="page in topMenuPages" :key="page.id"
+                        :to="{ name: 'frontend.page', params: { slug: page.slug } }"
+                        class="text-base font-medium capitalize py-3 border-b border-slate-100 text-heading">{{
+                            page.title }}</router-link>
+
+                    <router-link v-on:click="hideTarget('mobile-sidebar-canvas', 'canvas-active')"
                         class="text-base font-medium capitalize py-3 border-b border-slate-100 text-heading"
                         :to="{ name: 'frontend.offers' }">
                         {{ $t("label.offers") }}
                     </router-link>
-
-                    <router-link v-on:click="hideTarget('mobile-sidebar-canvas', 'canvas-active')"
-                        v-if="pages.length > 0" v-for="page in pages" :key="page"
-                        :to="{ name: 'frontend.page', params: { slug: page.slug } }"
-                        class="text-base font-medium capitalize py-3 border-b border-slate-100 text-heading">{{
-                            page.title }}</router-link>
                 </nav>
 
                 <div v-if="setting.site_language_switch === enums.activityEnum.ENABLE">
@@ -95,13 +95,16 @@
 <script>
 import targetService from "../../../services/targetService";
 import activityEnum from "../../../enums/modules/activityEnum";
+import statusEnum from "../../../enums/modules/statusEnum";
+import menuSectionEnum from "../../../enums/modules/menuSectionEnum";
 
 export default {
     name: "FrontendMobileSideBarComponent",
     data() {
         return {
             enums: {
-                activityEnum: activityEnum
+                activityEnum: activityEnum,
+                menuSectionEnum: menuSectionEnum
             },
         }
     },
@@ -115,9 +118,19 @@ export default {
         languages: function () {
             return this.$store.getters['frontendLanguage/lists'];
         },
-        pages: function () {
-            return this.$store.getters['frontendPage/lists'];
+        topMenuPages: function () {
+            return this.$store.getters['frontendPage/lists'].filter(
+                page => page.menu_section_id === this.enums.menuSectionEnum.TOP_MENU
+            );
         }
+    },
+    mounted() {
+        this.$store.dispatch("frontendPage/lists", {
+            paginate: 0,
+            order_column: "id",
+            order_type: "asc",
+            status: statusEnum.ACTIVE
+        }).then().catch();
     },
     methods: {
         hideTarget: function (id, cClass) {

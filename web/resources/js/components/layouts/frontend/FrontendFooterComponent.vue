@@ -151,7 +151,7 @@ export default {
                 _.forEach(res.data.data, (page) => {
                     if (page.menu_section_id === this.enums.menuSectionEnum.LEGAL) {
                         this.legalPages.push(page);
-                    } else {
+                    } else if (page.menu_section_id === this.enums.menuSectionEnum.SUPPORT) {
                         this.supportPages.push(page);
                     }
                 });

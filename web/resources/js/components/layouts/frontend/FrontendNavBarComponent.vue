@@ -34,6 +34,14 @@
                             </router-link>
                         </li>
 
+                        <li v-for="page in topMenuPages" :key="page.id" class="header-nav-item">
+                            <router-link class="header-nav-menu"
+                                :class="checkIsPathAndRoutePathSame('/page/' + page.slug) ? 'router-link-active router-link-exact-active' : ''"
+                                :to="{ name: 'frontend.page', params: { slug: page.slug } }">
+                                {{ page.title }}
+                            </router-link>
+                        </li>
+
                         <li class="header-nav-item">
                             <button type="button" class="header-nav-menu down-arrow"
                                 :aria-expanded="categoryMenuOpen"
@@ -295,6 +303,7 @@ import activityEnum from "../../../enums/modules/activityEnum";
 import roleEnum from "../../../enums/modules/roleEnum";
 import MenuChildrenComponent from "../../frontend/components/MenuChildrenComponent";
 import orderTypeEnum from "../../../enums/modules/orderTypeEnum";
+import menuSectionEnum from "../../../enums/modules/menuSectionEnum";
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import _ from "lodash";
@@ -333,7 +342,8 @@ export default {
             defaultLanguage: null,
             enums: {
                 activityEnum: activityEnum,
-                roleEnum: roleEnum
+                roleEnum: roleEnum,
+                menuSectionEnum: menuSectionEnum
             },
             languageProps: {
                 paginate: 0,
@@ -388,11 +398,22 @@ export default {
         defaultMenu: function () {
             return this.$store.getters.authDefaultMenu;
         },
+        topMenuPages: function () {
+            return this.$store.getters['frontendPage/lists'].filter(
+                page => page.menu_section_id === this.enums.menuSectionEnum.TOP_MENU
+            );
+        },
     },
     mounted() {
         this.currentRoute = this.$route.path;
         this.loading.isActive = true;
         this.orderPermissionCheck();
+        this.$store.dispatch("frontendPage/lists", {
+            paginate: 0,
+            order_column: "id",
+            order_type: "asc",
+            status: statusEnum.ACTIVE
+        }).then().catch();
         this.$store.dispatch('frontendSetting/lists').then(res => {
             this.defaultLanguage = res.data.data.site_default_language;
             const globalState = this.$store.getters['globalState/lists'];
