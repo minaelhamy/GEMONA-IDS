@@ -1,8 +1,10 @@
 <template>
     <LoadingComponent :props="loading" />
     <div class="w-full max-w-3xl mx-auto rounded-2xl flex overflow-hidden gap-y-6 bg-white shadow-card mb-24 !sm:mb-0">
-        <img :src="APP_URL + '/images/required/auth.jpg'" alt="banners"
-            class="w-full hidden sm:block sm:max-w-xs md:max-w-sm flex-shrink-0">
+        <div class="w-full hidden sm:flex sm:max-w-xs md:max-w-sm flex-shrink-0 bg-[#f7f3fb] items-center justify-center p-8">
+            <img :src="APP_URL + '/images/required/gemona-signup.png'" alt="GEMONA"
+                class="w-56 max-w-full mx-auto" loading="lazy">
+        </div>
         <form class="w-full p-6" @submit.prevent="login">
             <div class="text-center mb-8">
                 <h3 class="capitalize text-2xl mb-2 font-bold text-primary">{{ $t('label.sign_in') }}</h3>
@@ -64,9 +66,17 @@
                 <label for="formPassword" class="text-sm font-medium capitalize mb-1 field-title required">
                     {{ $t('label.password') }}
                 </label>
-                <input v-model="form.password" :class="errors.password ? 'invalid' : ''" id="formPassword"
-                    type="password"
-                    class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
+                <div class="relative">
+                    <input v-model="form.password" :class="errors.password ? 'invalid' : ''" id="formPassword"
+                        :type="showPassword ? 'text' : 'password'"
+                        class="w-full h-12 ltr:pl-4 rtl:pr-4 ltr:pr-16 rtl:pl-16 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500" />
+                    <button type="button"
+                        class="absolute top-1/2 ltr:right-4 rtl:left-4 -translate-y-1/2 text-lg leading-none text-primary"
+                        :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                        @click="showPassword = !showPassword">
+                        <i :class="showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
+                    </button>
+                </div>
                 <small class="db-field-alert" v-if="errors.password">{{ errors.password[0] }}</small>
             </div>
             <div class="flex items-center justify-between mb-6">
@@ -162,6 +172,7 @@ export default {
             demo: ENV.DEMO,
             APP_URL: ENV.API_URL,
             toggleValue: false,
+            showPassword: false,
             inputLabel: this.$t('label.email'),
             inputButton: this.$t('label.use_phone_instead')
         }
