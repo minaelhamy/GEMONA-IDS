@@ -1,0 +1,1 @@
+import{_ as o,r as n,o as r,k as t}from"./app-DU5x0_rd.js";const p={name:"SupplierComponent"};function s(c,a,_,i,m,u){const e=n("router-view");return r(),t(e)}const l=o(p,[["render",s]]);export{l as default};

@@ -147,6 +147,11 @@ class CustomerService
     {
         try {
             if (!in_array(EnumRole::CUSTOMER, $this->blockRoles) && $customer->hasRole(EnumRole::CUSTOMER)) {
+                if ($customer->organization && $customer->organization->status !== Status::ACTIVE) {
+                    $customer->organization->status = Status::ACTIVE;
+                    $customer->organization->save();
+                }
+
                 $customer->status = Status::ACTIVE;
                 $customer->save();
 

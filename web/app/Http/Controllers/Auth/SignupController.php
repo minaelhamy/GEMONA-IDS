@@ -126,7 +126,7 @@ class SignupController extends Controller
                     [
                         'address'   => $request->post('address'),
                         'type'      => 'organization',
-                        'status'    => Status::ACTIVE,
+                        'status'    => Status::INACTIVE,
                         'is_seeded' => Ask::NO,
                     ]
                 );

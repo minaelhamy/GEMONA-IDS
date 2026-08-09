@@ -103,6 +103,7 @@
                         :clearOnClose="true"
                         :placeholder="$t('label.select_your_organization')"
                         :search-placeholder="$t('label.search_organization')"
+                        @search:change="organizationSearchChange"
                         @update:modelValue="organizationChange" />
                     <input v-else v-model="form.organization_name" :class="errors.organization_name ? 'invalid' : ''"
                         type="text" class="w-full h-12 px-4 rounded-lg text-base border border-[#D9DBE9] hover:border-primary/30 focus-within:border-primary/30 transition-all duration-500"
@@ -175,6 +176,7 @@ export default {
             flag: "",
             errors: {},
             pendingMessage: "",
+            organizationSearch: "",
             APP_URL: ENV.API_URL,
         }
     },
@@ -192,8 +194,21 @@ export default {
             return [...new Set(this.organizations.map((organization) => organization.country).filter(Boolean))].sort();
         },
         filteredOrganizations: function () {
+            const search = this.organizationSearch.trim().toLowerCase();
+
             return this.organizations
-                .filter((organization) => !this.form.country || organization.country === this.form.country)
+                .filter((organization) => {
+                    if (!search) {
+                        return true;
+                    }
+
+                    return [
+                        organization.name,
+                        organization.country,
+                        organization.address,
+                        organization.type,
+                    ].filter(Boolean).some((value) => String(value).toLowerCase().includes(search));
+                })
                 .map((organization) => ({
                     ...organization,
                     display_name: `${organization.name}${organization.country ? ' - ' + organization.country : ''}`
@@ -235,6 +250,9 @@ export default {
                 this.form.country = organization.country || this.form.country;
                 this.form.address = organization.address || this.form.address;
             }
+        },
+        organizationSearchChange: function (search) {
+            this.organizationSearch = search || "";
         },
         resetOrganizationName: function () {
             this.form.organization_name = "";
