@@ -42,48 +42,21 @@
                                 class="fixed top-[64px] left-0 z-10 w-full origin-top scale-y-0 transition-all duration-300">
                                 <div class="container">
                                     <div class="w-full rounded-b-2xl shadow-paper bg-white overflow-hidden">
-                                        <div class="flex items-start">
-                                        <nav class="w-72 max-h-[70vh] overflow-y-auto thin-scrolling border-r border-gray-100 py-3">
-                                            <router-link v-for="(category, index) in categories" :key="index"
-                                                :to="{ name: 'frontend.product', query: { category: category.slug } }"
-                                                @mouseover.prevent="activeTab = 'category_' + category.slug"
-                                                class="block capitalize text-sm font-semibold tracking-wide px-5 py-3 transition-all duration-300 border-l-2 border-transparent hover:text-primary hover:bg-[#FFF4F1]"
-                                                :class="{ 'text-primary bg-[#FFF4F1] border-primary': activeTab === 'category_' + category.slug }">
-                                                {{ category.name }}
-                                            </router-link>
-                                        </nav>
-                                        <div class="flex-1 min-w-0">
-                                        <div v-for="category in categories">
-                                            <div v-if="category.children.length > 0"
-                                                :class="{ 'block': activeTab === 'category_' + category.slug, 'hidden': activeTab !== 'category_' + category.slug }"
-                                                class="flex items-start gap-5 p-5">
-                                                <div class="w-56 h-80 flex-shrink-0">
-                                                    <img class="w-full h-full object-top object-cover rounded-lg"
-                                                        :src="category.cover" alt="category" />
-                                                </div>
-                                                <div class="w-full max-h-[70vh] overflow-y-auto thin-scrolling">
-                                                    <div class="w-full grid gap-5 grid-cols-3 xl:grid-cols-4">
-                                                        <div v-for="children in category.children" class="self-start">
-                                                            <h3
-                                                                class="text-sm font-semibold capitalize pb-3 border-b border-slate-200">
-                                                                <router-link
-                                                                    :to="{ name: 'frontend.product', query: { category: children.slug } }"
-                                                                    class="hover:text-primary transition-all duration-300">
-                                                                    {{ children.name }}
-                                                                </router-link>
-                                                            </h3>
+                                        <div class="max-h-[70vh] overflow-y-auto thin-scrolling p-5">
+                                            <div class="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-x-8 gap-y-6">
+                                                <div v-for="category in categories" :key="category.id || category.slug" class="self-start">
+                                                    <router-link
+                                                        :to="{ name: 'frontend.product', query: { category: category.slug } }"
+                                                        class="block text-sm font-semibold capitalize pb-2 border-b border-slate-200 transition-all duration-300 hover:text-primary">
+                                                        {{ category.name }}
+                                                    </router-link>
 
-                                                            <nav v-if="children.children.length > 0"
-                                                                class="flex flex-col mt-2">
-                                                                <MenuChildrenComponent
-                                                                    :categories="children.children" />
-                                                            </nav>
-                                                        </div>
-                                                    </div>
+                                                    <nav v-if="category.children && category.children.length > 0"
+                                                        class="flex flex-col mt-2 pl-3 border-l border-gray-100">
+                                                        <MenuChildrenComponent :categories="category.children" />
+                                                    </nav>
                                                 </div>
                                             </div>
-                                        </div>
-                                        </div>
                                         </div>
                                     </div>
                                 </div>

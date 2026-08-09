@@ -312,6 +312,18 @@ class Product extends Model implements HasMedia
         return $query->selectSub($reviewsStar, 'rating_star')->selectSub($reviewsStarCount, 'rating_star_count');
     }
 
+    public function scopeWithDisplayImage($query)
+    {
+        return $query->where(function ($query) {
+            $query->where(function ($query) {
+                $query->whereNotNull('external_image_url')
+                    ->where('external_image_url', '!=', '');
+            })->orWhereHas('media', function ($media) {
+                $media->where('collection_name', 'product');
+            });
+        });
+    }
+
     public function wishlist()
     {
         return $this->hasOne(Wishlist::class);

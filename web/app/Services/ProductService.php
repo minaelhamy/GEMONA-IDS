@@ -341,6 +341,7 @@ class ProductService
             $query = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->withReviewRating()
+                ->withDisplayImage()
                 ->where(['status' => Status::ACTIVE]);
 
             if ($rand > 0) {
@@ -523,6 +524,7 @@ class ProductService
             $baseQuery = Product::query()
                 ->select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.status', 'products.product_category_id', 'products.product_brand_id', 'products.variation_price', 'products.external_image_url')
                 ->active('products.status')
+                ->withDisplayImage()
                 ->when(count($categoryIds), function ($query) use ($categoryIds) {
                     $query->whereIn('product_category_id', $categoryIds);
                 })
@@ -577,6 +579,7 @@ class ProductService
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'brand', 'variations', 'reviews')
                 ->active('products.status')
+                ->withDisplayImage()
                 ->when(count($categoryIds), function ($query) use ($categoryIds) {
                     $query->whereIn('product_category_id', $categoryIds);
                 })
@@ -655,6 +658,7 @@ class ProductService
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'variations', 'reviews')
                 ->active('products.status')
+                ->withDisplayImage()
                 ->where('products.add_to_flash_sale', Ask::YES)
                 ->where('products.offer_start_date', '<=', $now)
                 ->where('products.offer_end_date', '>=', $now)
@@ -684,6 +688,7 @@ class ProductService
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                 ->with('media', 'variations', 'reviews')
                 ->active('products.status')
+                ->withDisplayImage()
                 ->where('products.offer_start_date', '<=', $now)
                 ->where('products.offer_end_date', '>=', $now)
                 ->randAndLimitOrOrderBy($rand, $orderColumn, $orderType)
@@ -751,6 +756,7 @@ class ProductService
                     ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
                     ->with('media', 'variations', 'reviews', 'tags')
                     ->active('products.status')
+                    ->withDisplayImage()
                     ->whereHas('tags', function ($query) use ($productTags) {
                         if (count($productTags) > 0) {
                             $i = 0;
@@ -797,6 +803,7 @@ class ProductService
                     return $query->where('user_id', Auth::user()->id);
                 })
                 ->active('products.status')
+                ->withDisplayImage()
                 ->randAndLimitOrOrderBy($rand, $orderColumn, $orderType)
                 ->$method($methodValue);
         } catch (Exception $exception) {
