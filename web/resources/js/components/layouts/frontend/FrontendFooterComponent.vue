@@ -10,19 +10,6 @@
                             <img class="mb-8 w-36" :src="setting.theme_footer_logo" alt="logo">
                         </router-link>
 
-                        <form @submit.prevent="saveSubscription" class="mt-5 mb-6 block">
-                            <label class="mb-3 font-medium text-white">
-                                {{ $t('message.subscribe_to_our_newsletter') }}
-                            </label>
-                            <div class="flex w-full h-10 rounded-3xl p-1 bg-white">
-                                <input type="email" v-model="subscriptionProps.post.email"
-                                    :placeholder="$t('label.your_email_address')" class="w-full h-full pl-3 pr-2">
-                                <button type="submit"
-                                    class="text-xs font-semibold capitalize flex-shrink-0 px-3 h-full rounded-3xl bg-primary text-white">
-                                    {{ $t('button.subscribe') }}
-                                </button>
-                            </div>
-                        </form>
                         <nav v-if="setting.social_media_facebook || setting.social_media_twitter || setting.social_media_instagram || setting.social_media_youtube"
                             class="flex flex-wrap items-center gap-6 tablet:justify-center">
                             <a v-if="setting.social_media_facebook" target="_blank"
@@ -106,8 +93,6 @@
 
 <script>
 import statusEnum from "../../../enums/modules/statusEnum";
-import axios from "axios";
-import alertService from "../../../services/alertService";
 import LoadingComponent from "../../frontend/components/LoadingComponent";
 import menuSectionEnum from "../../../enums/modules/menuSectionEnum";
 import _ from "lodash";
@@ -125,13 +110,7 @@ export default {
             enums: {
                 statusEnum: statusEnum,
                 menuSectionEnum: menuSectionEnum
-            },
-            subscriptionProps: {
-                post: {
-                    email: ""
-                }
-            },
-            errors: {},
+            }
         }
     },
     computed: {
@@ -160,26 +139,6 @@ export default {
         }).catch((err) => {
             this.loading.isActive = false;
         });
-    },
-    methods: {
-        saveSubscription: function () {
-            try {
-                const url = '/frontend/subscriber';
-                this.loading.isActive = true;
-                axios.post(url, this.subscriptionProps.post).then(res => {
-                    this.loading.isActive = false;
-                    this.subscriptionProps.post.email = "";
-                    this.errors = {};
-                    alertService.success(this.$t("message.subscribe"));
-                }).catch((err) => {
-                    this.loading.isActive = false;
-                    alertService.error(err.response.data.errors.email[0]);
-                });
-            } catch (err) {
-                this.loading.isActive = false;
-                alertService.error(err);
-            }
-        }
     }
 }
 </script>

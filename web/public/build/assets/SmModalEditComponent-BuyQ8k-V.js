@@ -1,0 +1,1 @@
+import{_ as s,o as e,c as a,a as o,t as l}from"./app-Dda_VYXU.js";const c={name:"SmModalEditComponent"},i={class:"db-btn-outline sm success modal-btn m-0.5"};function r(n,t,d,m,p,u){return e(),a("button",i,[t[0]||(t[0]=o("i",{class:"lab lab-line-edit"},null,-1)),o("span",null,l(n.$t("button.edit")),1)])}const b=s(c,[["render",r]]);export{b as S};
