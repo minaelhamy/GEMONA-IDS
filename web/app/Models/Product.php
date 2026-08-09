@@ -317,7 +317,7 @@ class Product extends Model implements HasMedia
         return $query->where(function ($query) {
             $query->where(function ($query) {
                 $query->whereNotNull('external_image_url')
-                    ->where('external_image_url', '!=', '');
+                    ->whereRaw("TRIM(external_image_url) != ''");
             })->orWhereHas('media', function ($media) {
                 $media->where('collection_name', 'product');
             });
