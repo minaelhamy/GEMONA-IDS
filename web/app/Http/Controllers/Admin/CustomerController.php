@@ -39,6 +39,7 @@ class CustomerController extends AdminController implements HasMiddleware
             new Middleware('permission:customers', only: ['myOrder']),
             new Middleware('permission:customers_create', only: ['store']),
             new Middleware('permission:customers_edit', only: ['update']),
+            new Middleware('permission:customers_edit', only: ['approve']),
             new Middleware('permission:customers_delete', only: ['destroy']),
             new Middleware('permission:customers_show', only: ['show']),
         ];
@@ -68,6 +69,15 @@ class CustomerController extends AdminController implements HasMiddleware
     ) : \Illuminate\Http\Response | CustomerResource | \Illuminate\Contracts\Foundation\Application | \Illuminate\Contracts\Routing\ResponseFactory {
         try {
             return new CustomerResource($this->customerService->update($request, $customer));
+        } catch (Exception $exception) {
+            return response(['status' => false, 'message' => $exception->getMessage()], 422);
+        }
+    }
+
+    public function approve(User $customer
+    ) : \Illuminate\Http\Response | CustomerResource | \Illuminate\Contracts\Foundation\Application | \Illuminate\Contracts\Routing\ResponseFactory {
+        try {
+            return new CustomerResource($this->customerService->approve($customer));
         } catch (Exception $exception) {
             return response(['status' => false, 'message' => $exception->getMessage()], 422);
         }

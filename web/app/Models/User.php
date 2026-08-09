@@ -38,6 +38,9 @@ class User extends Authenticatable implements HasMedia
         'username',
         'phone',
         'country_code',
+        'organization_id',
+        'signup_country',
+        'signup_address',
         'is_guest',
         'status',
         'email_verified_at'
@@ -67,6 +70,9 @@ class User extends Authenticatable implements HasMedia
         'username'          => 'string',
         'phone'             => 'string',
         'country_code'      => 'string',
+        'organization_id'   => 'integer',
+        'signup_country'    => 'string',
+        'signup_address'    => 'string',
         'is_guest'          => 'integer',
         'status'            => 'integer',
         'email_verified_at' => 'datetime',
@@ -114,6 +120,11 @@ class User extends Authenticatable implements HasMedia
     public function addresses(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Address::class);
+    }
+
+    public function organization(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
 

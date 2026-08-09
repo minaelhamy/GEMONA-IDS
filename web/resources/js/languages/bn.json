@@ -442,6 +442,16 @@
         "use_phone_instead": "ব্যবহার করুন ফোন পরিবর্তে",
         "use_email_instead": "ব্যবহার করুন ইমেল পরিবর্তে",
         "sign_up": "নিবন্ধন করুন",
+        "organization": "প্রতিষ্ঠান",
+        "user_approvals": "ব্যবহারকারী অনুমোদন",
+        "all_customers": "সব গ্রাহক",
+        "approve": "অনুমোদন করুন",
+        "request_account_approval": "অ্যাকাউন্ট অনুমোদনের অনুরোধ করুন",
+        "select_existing_organization": "বিদ্যমান প্রতিষ্ঠান নির্বাচন করুন",
+        "add_new_organization": "নতুন প্রতিষ্ঠান যোগ করুন",
+        "organization_name": "প্রতিষ্ঠানের নাম",
+        "select_your_organization": "আপনার দূতাবাস বা প্রতিষ্ঠান নির্বাচন করুন",
+        "search_organization": "প্রতিষ্ঠান অনুসন্ধান করুন",
         "enter_the_code_sent_to": "প্রেরিত কোড লিখুন",
         "back_to_sign_in": "লগইনে ফিরে যান",
         "verify_number": "নাম্বার যাচাই করুন",
@@ -897,6 +907,13 @@
         "product_name_is_required_to_generate_description": "পণ্যের নাম বর্ণনা তৈরি করতে প্রয়োজন",
         "product_name_is_required_to_generate_name": "AI নাম তৈরি করতে পণ্যের নাম প্রয়োজন",
         "product_name_is_required_to_generate_tags": "AI ট্যাগ তৈরি করতে পণ্যের নাম প্রয়োজন",
-        "ask_me_anything": "আমাকে যেকোনো কিছু জিজ্ঞাসা করুন"
+        "ask_me_anything": "আমাকে যেকোনো কিছু জিজ্ঞাসা করুন",
+        "signup_destination_title": "গন্তব্য অনুযায়ী একত্রিত মিশরীয় পণ্য",
+        "signup_destination_text": "আপনার প্রতিষ্ঠান আমাদের অর্ডার একত্র করে সঠিক দেশে পাঠাতে সাহায্য করে।",
+        "signup_approval_intro": "আপনার অ্যাকাউন্ট অনুরোধ তৈরি করুন। অর্ডার চালুর আগে GEMONA এটি অনুমোদন করবে।",
+        "account_request_received": "অ্যাকাউন্ট অনুরোধ গ্রহণ করা হয়েছে",
+        "approve_new_signup_requests": "গ্রাহকরা লগইন ও অর্ডার করার আগে নতুন সাইনআপ অনুরোধ অনুমোদন করুন।",
+        "no_pending_user_approvals": "কোনো অপেক্ষমাণ ব্যবহারকারী অনুমোদন নেই",
+        "customer_approved_successfully": "গ্রাহক সফলভাবে অনুমোদিত হয়েছে"
     }
 }

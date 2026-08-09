@@ -147,6 +147,7 @@ Route::prefix('auth')->middleware(['installed', 'apiKey', 'localization'])->name
     });
 
     Route::prefix('signup')->name('signup.')->group(function () {
+        Route::get('/organizations', [SignupController::class, 'organizations']);
         Route::post('/otp-phone', [SignupController::class, 'otpPhone']);
         Route::post('/otp-email', [SignupController::class, 'otpEmail']);
         Route::post('/verify-phone', [SignupController::class, 'verifyPhone']);
@@ -553,6 +554,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth:sanctum'])->group(func
     Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/', [CustomerController::class, 'index']);
         Route::post('/', [CustomerController::class, 'store']);
+        Route::post('/approve/{customer}', [CustomerController::class, 'approve']);
         Route::get('/show/{customer}', [CustomerController::class, 'show']);
         Route::match(['post', 'put', 'patch'], '/{customer}', [CustomerController::class, 'update']);
         Route::delete('/{customer}', [CustomerController::class, 'destroy']);

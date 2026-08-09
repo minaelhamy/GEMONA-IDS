@@ -101,6 +101,36 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="col-12 sm:col-6 !py-1.5">
+                            <div class="db-list-item p-0">
+                                <span class="db-list-item-title w-full sm:w-1/2">
+                                    {{ $t("label.organization") }}
+                                </span>
+                                <span class="db-list-item-text w-full sm:w-1/2">
+                                    {{ customer.organization?.name || '' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-12 sm:col-6 !py-1.5">
+                            <div class="db-list-item p-0">
+                                <span class="db-list-item-title w-full sm:w-1/2">
+                                    {{ $t("label.country") }}
+                                </span>
+                                <span class="db-list-item-text w-full sm:w-1/2">
+                                    {{ customer.country }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-12 !py-1.5">
+                            <div class="db-list-item p-0">
+                                <span class="db-list-item-title w-full sm:w-1/4">
+                                    {{ $t("label.address") }}
+                                </span>
+                                <span class="db-list-item-text w-full sm:w-3/4">
+                                    {{ customer.address }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

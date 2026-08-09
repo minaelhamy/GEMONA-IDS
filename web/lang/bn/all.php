@@ -147,6 +147,8 @@ return [
         'product_attribute_required'       => 'এই পণ্য বৈশিষ্ট্য আইডি প্রদান প্রয়োজন',
         'database_error_message'           => 'একটি ডাটাবেস ত্রুটি ঘটেছে।',
         'transaction_failed'               => 'লেনদেন ব্যর্থ হয়েছে',
-        'agent_is_not_active'             => 'এজেন্ট সক্রিয় নয়।'
+        'agent_is_not_active'              => 'এজেন্ট সক্রিয় নয়।',
+        'signup_pending_approval'          => 'আপনার অ্যাকাউন্ট অনুরোধ গ্রহণ করা হয়েছে। লগইন ও অর্ডার করার আগে GEMONA আপনার অ্যাকাউন্ট পর্যালোচনা করে অনুমোদন করবে।',
+        'account_pending_approval'         => 'আপনার অ্যাকাউন্ট GEMONA অ্যাডমিন অনুমোদনের অপেক্ষায় আছে।'
     ]
 ];

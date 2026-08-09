@@ -147,6 +147,8 @@ return [
         'product_attribute_required'       => 'يجب توفير معرف سمة المنتج هذا',
         'database_error_message'           => 'حدث خطأ في قاعدة البيانات.',
         'transaction_failed'               => 'فشلت المعاملة',
-        'agent_is_not_active'             => 'الوكيل غير نشط.'
+        'agent_is_not_active'              => 'الوكيل غير نشط.',
+        'signup_pending_approval'          => 'تم استلام طلب إنشاء الحساب. ستقوم جيمونا بمراجعته والموافقة عليه قبل تسجيل الدخول والطلب.',
+        'account_pending_approval'         => 'حسابك بانتظار موافقة إدارة جيمونا.'
     ]
 ];

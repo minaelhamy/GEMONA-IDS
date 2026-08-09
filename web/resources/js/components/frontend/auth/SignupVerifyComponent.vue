@@ -1,8 +1,10 @@
 <template>
     <LoadingComponent :props="loading" />
     <div class="w-full max-w-3xl mx-auto rounded-2xl flex overflow-hidden gap-y-6 bg-white shadow-card mb-24 sm:mb-0">
-        <img :src="APP_URL + '/images/required/auth.jpg'" alt="banners"
-            class="w-full hidden sm:block sm:max-w-xs md:max-w-sm flex-shrink-0" />
+        <div class="w-full hidden sm:flex sm:max-w-xs md:max-w-sm flex-shrink-0 bg-[#f7f3fb] items-center justify-center p-8">
+            <img :src="APP_URL + '/images/required/gemona-signup.png'" alt="GEMONA"
+                class="w-56 max-w-full" />
+        </div>
         <form class="w-full p-6" @submit.prevent="save">
             <div class="text-center mb-8 relative">
                 <h3 class="capitalize text-2xl mb-2 font-bold text-primary"
@@ -82,8 +84,8 @@ export default {
                 this.props.form.country_code = otpPhone.otp.country_code;
                 this.props.form.email = "";
                 this.loading.isActive = false;
-            } else if (Object.keys(otpEmail).length > 0 && otpPhone.otp.email !== "") {
-                this.props.form.email = otpPhone.otp.email;
+            } else if (Object.keys(otpEmail).length > 0 && otpEmail.otp.email !== "") {
+                this.props.form.email = otpEmail.otp.email;
                 this.props.form.phone = "";
                 this.props.form.country_code = "";
                 this.loading.isActive = false;
@@ -153,14 +155,9 @@ export default {
         signup: function () {
             try {
                 const form = this.$store.getters['frontendSignup/formData'];
-                this.$store.dispatch("frontendSignup/signup", form).then(async (res) => {
-                    await this.$store.dispatch("signupLoginVerify", form).then((res) => {
-                        this.loading.isActive = false;
-                        alertService.success(res.data.message);
-                    }).catch((err) => {
-                        this.loading.isActive = false;
-                        this.errors = err.response.data.message;
-                    });
+                this.$store.dispatch("frontendSignup/signup", form).then((res) => {
+                    this.loading.isActive = false;
+                    alertService.success(res.data.message);
                     this.$store.dispatch("frontendSignup/reset");
                     this.props.form = {
                         email: "",
@@ -170,7 +167,7 @@ export default {
                     };
                     this.errors = '';
                     this.$router.push({
-                        name: "frontend.home",
+                        name: "auth.login",
                     });
                 }).catch((err) => {
                     this.loading.isActive = false;

@@ -442,6 +442,16 @@
         "use_phone_instead": "استخدم الهاتف بدلاً من ذلك",
         "use_email_instead": "استخدم البريد الإلكتروني بدلاً من ذلك",
         "sign_up": "التسجيل",
+        "organization": "المؤسسة",
+        "user_approvals": "موافقات المستخدمين",
+        "all_customers": "كل العملاء",
+        "approve": "موافقة",
+        "request_account_approval": "طلب الموافقة على الحساب",
+        "select_existing_organization": "اختيار مؤسسة موجودة",
+        "add_new_organization": "إضافة مؤسسة جديدة",
+        "organization_name": "اسم المؤسسة",
+        "select_your_organization": "اختر سفارتك أو مؤسستك",
+        "search_organization": "بحث عن مؤسسة",
         "enter_the_code_sent_to": "أدخل الرمز المرسل إلى",
         "back_to_sign_in": "العودة لتسجيل الدخول",
         "verify_number": "تحقق من الرقم",
@@ -899,6 +909,13 @@
         "product_name_is_required_to_generate_description": "اسم المنتج مطلوب لتوليد الوصف",
         "product_name_is_required_to_generate_name": "اسم المنتج مطلوب لتوليد اسم AI",
         "product_name_is_required_to_generate_tags": "اسم المنتج مطلوب لتوليد علامات AI",
-        "ask_me_anything": "اسألني أي شيء"
+        "ask_me_anything": "اسألني أي شيء",
+        "signup_destination_title": "منتجات مصرية مجمعة حسب الوجهة",
+        "signup_destination_text": "تساعدنا مؤسستك على تجميع الطلبات وشحنها معا إلى الدولة الصحيحة.",
+        "signup_approval_intro": "أنشئ طلب الحساب. ستقوم جيمونا بالموافقة عليه قبل تفعيل الطلبات.",
+        "account_request_received": "تم استلام طلب الحساب",
+        "approve_new_signup_requests": "وافق على طلبات التسجيل الجديدة قبل أن يتمكن العملاء من تسجيل الدخول والطلب.",
+        "no_pending_user_approvals": "لا توجد طلبات موافقة معلقة",
+        "customer_approved_successfully": "تمت الموافقة على العميل بنجاح"
     }
 }

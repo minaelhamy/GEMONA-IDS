@@ -1,1 +1,0 @@
-import{_ as e,r as t,o as r,k as n}from"./app-D-0q4YiP.js";const c={name:"ProductCategoryComponent"};function s(a,p,_,m,u,d){const o=t("router-view");return r(),n(o)}const i=e(c,[["render",s]]);export{i as default};

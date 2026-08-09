@@ -442,6 +442,16 @@
         "use_phone_instead": "Use Phone Instead",
         "use_email_instead": "Use Email Instead",
         "sign_up": "Sign Up",
+        "organization": "Organization",
+        "user_approvals": "User approvals",
+        "all_customers": "All customers",
+        "approve": "Approve",
+        "request_account_approval": "Request account approval",
+        "select_existing_organization": "Select existing organization",
+        "add_new_organization": "Add new organization",
+        "organization_name": "Organization name",
+        "select_your_organization": "Select your embassy or organization",
+        "search_organization": "Search organization",
         "enter_the_code_sent_to": "Enter The Code Sent To",
         "back_to_sign_in": "Back to Sign In",
         "verify_number": "Verify Number",
@@ -899,6 +909,13 @@
         "product_name_is_required_to_generate_description": "Product name is required to generate description",
         "product_name_is_required_to_generate_name": "Product name is required to generate AI name",
         "product_name_is_required_to_generate_tags": "Product name is required to generate AI tags",
-        "ask_me_anything" : "Ask me anything"
+        "ask_me_anything" : "Ask me anything",
+        "signup_destination_title": "Egyptian products, consolidated by destination",
+        "signup_destination_text": "Your organization helps us group orders and ship them together to the right country.",
+        "signup_approval_intro": "Create your account request. GEMONA will approve it before ordering is enabled.",
+        "account_request_received": "Account request received",
+        "approve_new_signup_requests": "Approve new signup requests before customers can log in and order.",
+        "no_pending_user_approvals": "No pending user approvals",
+        "customer_approved_successfully": "Customer approved successfully"
     }
 }

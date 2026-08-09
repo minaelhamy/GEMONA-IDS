@@ -147,6 +147,8 @@ return [
         'product_attribute_required'       => 'This product attribute id provide required.',
         'database_error_message'           => 'A database error occurred.',
         'transaction_failed'               => 'Transaction Failed',
-        'agent_is_not_active'             => 'Agent is not active.'
+        'agent_is_not_active'              => 'Agent is not active.',
+        'signup_pending_approval'          => 'Your account request has been received. GEMONA will review and approve your account before you can log in and order.',
+        'account_pending_approval'         => 'Your account is pending GEMONA admin approval.'
     ]
 ];

@@ -2,6 +2,7 @@ const CustomerComponent = () => import("../../components/admin/customers/Custome
 const CustomerListComponent = () => import("../../components/admin/customers/CustomerListComponent");
 const CustomerShowComponent = () => import("../../components/admin/customers/CustomerShowComponent");
 const CustomerOrderDetailsComponent = () => import("../../components/admin/customers/CustomerOrderDetailsComponent");
+const CustomerApprovalComponent = () => import("../../components/admin/customers/CustomerApprovalComponent");
 
 
 export default [
@@ -26,6 +27,17 @@ export default [
                     auth: true,
                     permissionUrl: "customers",
                     breadcrumb: "",
+                }
+            },
+            {
+                path: "approvals",
+                component: CustomerApprovalComponent,
+                name: "admin.customers.approvals",
+                meta: {
+                    isFrontend: false,
+                    auth: true,
+                    permissionUrl: "customers",
+                    breadcrumb: "approvals",
                 }
             },
             {

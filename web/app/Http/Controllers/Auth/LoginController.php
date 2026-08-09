@@ -68,6 +68,12 @@ class LoginController extends Controller
 
         if ($request['email']) {
             if (!Auth::guard('web')->attempt($request->only('email', 'password', 'status'))) {
+                $pendingUser = User::where('email', $request['email'])->where('status', Status::INACTIVE)->first();
+                if ($pendingUser) {
+                    return new JsonResponse([
+                        'errors' => ['validation' => trans('all.message.account_pending_approval')]
+                    ], 400);
+                }
                 return new JsonResponse([
                     'errors' => ['validation' => trans('all.message.credentials_invalid')]
                 ], 400);
@@ -75,6 +81,16 @@ class LoginController extends Controller
             $user = User::where('email', $request['email'])->first();
         } else {
             if (!Auth::guard('web')->attempt($request->only('country_code', 'phone', 'password', 'status'))) {
+                $pendingUser = User::where([
+                    'country_code' => $request->country_code,
+                    'phone'        => $request['phone'],
+                    'status'       => Status::INACTIVE,
+                ])->first();
+                if ($pendingUser) {
+                    return new JsonResponse([
+                        'errors' => ['validation' => trans('all.message.account_pending_approval')]
+                    ], 400);
+                }
                 return new JsonResponse([
                     'errors' => ['validation' => trans('all.message.credentials_invalid')]
                 ], 400);

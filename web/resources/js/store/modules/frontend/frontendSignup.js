@@ -5,7 +5,8 @@ export const frontendSignup = {
     state: {
         phone: {},
         email: {},
-        formData:{},   
+        formData:{},
+        organizations: [],
     },
     getters: {
         phone: function (state) {
@@ -16,9 +17,22 @@ export const frontendSignup = {
         },
         formData: function (state) {
             return state.formData;
+        },
+        organizations: function (state) {
+            return state.organizations;
         }
     },
     actions: {
+        organizations: function (context) {
+            return new Promise((resolve, reject) => {
+                axios.get("auth/signup/organizations").then((res) => {
+                    context.commit("organizations", res.data.data);
+                    resolve(res);
+                }).catch((err) => {
+                    reject(err);
+                });
+            });
+        },
         otpPhone: function (context, payload) {
             return new Promise((resolve, reject) => {
                 let url = "auth/signup/otp-phone";
@@ -87,6 +101,9 @@ export const frontendSignup = {
             state.phone = {};
             state.email = {};
             state.formData = {};
+        },
+        organizations: function(state, payload) {
+            state.organizations = payload;
         }
     },
 };

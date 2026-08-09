@@ -5,6 +5,7 @@ namespace App\Services;
 use Exception;
 use App\Enums\Ask;
 use App\Models\User;
+use App\Enums\Status;
 use App\Enums\Role as EnumRole;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,7 +38,7 @@ class CustomerService
             $orderColumn = $request->get('order_column') ?? 'id';
             $orderType   = $request->get('order_type') ?? 'desc';
 
-            return User::with('media', 'addresses')->role(EnumRole::CUSTOMER)->where(function ($query) use ($requests) {
+            return User::with('media', 'addresses', 'organization')->role(EnumRole::CUSTOMER)->where(function ($query) use ($requests) {
                 foreach ($requests as $key => $request) {
                     if (in_array($key, $this->userFilter)) {
                         if ($key == 'phone') {
@@ -46,6 +47,14 @@ class CustomerService
                             $query->where($key, 'like', '%' . $request . '%');
                         }
                     }
+                }
+                if (!blank($requests['organization'] ?? null)) {
+                    $query->whereHas('organization', function ($organizationQuery) use ($requests) {
+                        $organizationQuery->where('name', 'like', '%' . $requests['organization'] . '%');
+                    });
+                }
+                if (!blank($requests['country'] ?? null)) {
+                    $query->where('signup_country', 'like', '%' . $requests['country'] . '%');
                 }
             })->orderBy($orderColumn, $orderType)->$method(
                 $methodValue
@@ -121,10 +130,30 @@ class CustomerService
     {
         try {
             if (!in_array(EnumRole::CUSTOMER, $this->blockRoles)) {
-                return $customer;
+                return $customer->load('organization');
             } else {
                 throw new Exception(trans('all.message.permission_denied'), 422);
             }
+        } catch (Exception $exception) {
+            Log::info($exception->getMessage());
+            throw new Exception(QueryExceptionLibrary::message($exception), 422);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function approve(User $customer): User
+    {
+        try {
+            if (!in_array(EnumRole::CUSTOMER, $this->blockRoles) && $customer->hasRole(EnumRole::CUSTOMER)) {
+                $customer->status = Status::ACTIVE;
+                $customer->save();
+
+                return $customer->load('organization');
+            }
+
+            throw new Exception(trans('all.message.permission_denied'), 422);
         } catch (Exception $exception) {
             Log::info($exception->getMessage());
             throw new Exception(QueryExceptionLibrary::message($exception), 422);

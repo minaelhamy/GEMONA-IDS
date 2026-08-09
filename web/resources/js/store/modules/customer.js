@@ -109,6 +109,18 @@ export const customer = {
                     });
             });
         },
+        approve: function (context, payload) {
+            return new Promise((resolve, reject) => {
+                axios.post(`admin/customer/approve/${payload.id}`)
+                    .then((res) => {
+                        context.dispatch("lists", payload.search).then().catch();
+                        resolve(res);
+                    })
+                    .catch((err) => {
+                        reject(err);
+                    });
+            });
+        },
         show: function (context, payload) {
             return new Promise((resolve, reject) => {
                 axios

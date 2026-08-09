@@ -14,6 +14,10 @@
                             <ExcelComponent :method="xls" />
                         </div>
                     </div>
+                    <router-link :to="{ name: 'admin.customers.approvals' }" class="db-btn py-2 text-white bg-[#1AB759]">
+                        <i class="lab lab-line-circle-check lab-font-size-16"></i>
+                        <span>{{ $t("label.user_approvals") }}</span>
+                    </router-link>
                     <CustomerCreateComponent :props="props" v-if="permissionChecker('customers_create')" />
                 </div>
             </div>
@@ -39,6 +43,18 @@
                                 }}</label>
                             <input id="searchPhone" v-model="props.search.phone" v-on:keypress="phoneNumber($event)"
                                 type="text" class="db-field-control" />
+                        </div>
+                        <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+                            <label for="searchOrganization" class="db-field-title after:hidden">
+                                {{ $t("label.organization") }}
+                            </label>
+                            <input id="searchOrganization" v-model="props.search.organization" type="text" class="db-field-control" />
+                        </div>
+                        <div class="col-12 sm:col-6 md:col-4 xl:col-3">
+                            <label for="searchCountry" class="db-field-title after:hidden">
+                                {{ $t("label.country") }}
+                            </label>
+                            <input id="searchCountry" v-model="props.search.country" type="text" class="db-field-control" />
                         </div>
 
                         <div class="col-12 sm:col-6 md:col-4 xl:col-3">
@@ -75,6 +91,8 @@
                             <th class="db-table-head-th">{{ $t("label.name") }}</th>
                             <th class="db-table-head-th">{{ $t("label.email") }}</th>
                             <th class="db-table-head-th">{{ $t("label.phone") }}</th>
+                            <th class="db-table-head-th">{{ $t("label.organization") }}</th>
+                            <th class="db-table-head-th">{{ $t("label.country") }}</th>
                             <th class="db-table-head-th">{{ $t("label.status") }}</th>
                             <th class="db-table-head-th hidden-print"
                                 v-if="permissionChecker('customers_show') || permissionChecker('customers_edit') || permissionChecker('customers_delete')">
@@ -92,6 +110,12 @@
                             <td class="db-table-body-td">
                                 <span dir="ltr">{{ customer.phone ? customer.country_code + '' + customer.phone :
                                     ''}}</span>
+                            </td>
+                            <td class="db-table-body-td">
+                                {{ textShortener(customer.organization?.name || '', 24) }}
+                            </td>
+                            <td class="db-table-body-td">
+                                {{ customer.country }}
                             </td>
                             <td class="db-table-body-td">
                                 <span :class="statusClass(customer.status)">
@@ -114,7 +138,7 @@
                     </tbody>
                     <tbody class="db-table-body" v-else>
                         <tr class="db-table-body-tr">
-                            <td class="db-table-body-td text-center" colspan="5">
+                            <td class="db-table-body-td text-center" colspan="7">
                                 <div class="p-4">
                                     <div class="max-w-[300px] mx-auto mt-2">
                                         <img class="w-full h-full" :src="ENV.API_URL+'/images/default/not-found/not_found.png'" alt="Not Found">
@@ -210,6 +234,8 @@ export default {
                     name: "",
                     email: "",
                     phone: "",
+                    organization: "",
+                    country: "",
                     status: null,
                 },
                 flag: ""
@@ -259,6 +285,8 @@ export default {
             this.props.search.name = "";
             this.props.search.email = "";
             this.props.search.phone = "";
+            this.props.search.organization = "";
+            this.props.search.country = "";
             this.props.search.status = null;
             this.list();
         },

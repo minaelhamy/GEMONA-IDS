@@ -26,6 +26,14 @@ class CustomerResource extends JsonResource
             "status"       => $this->status,
             "image"        => $this->image,
             "country_code" => $this->country_code,
+            "country"      => $this->signup_country,
+            "address"      => $this->signup_address,
+            "organization" => $this->organization ? [
+                'id'      => $this->organization->id,
+                'name'    => $this->organization->name,
+                'country' => $this->organization->country,
+                'type'    => $this->organization->type,
+            ] : null,
         ];
     }
 }

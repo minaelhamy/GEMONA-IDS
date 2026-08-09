@@ -6,7 +6,10 @@ use Exception;
 use App\Enums\Ask;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\Address;
+use App\Models\Organization;
 use App\Enums\Activity;
+use App\Enums\Status;
 use Illuminate\Support\Str;
 use App\Libraries\AppLibrary;
 use App\Services\MenuService;
@@ -17,10 +20,10 @@ use App\Services\PermissionService;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SignupRequest;
 use App\Http\Resources\MenuResource;
+use App\Http\Resources\OrganizationResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Dipokhalder\Settings\Facades\Settings;
 use App\Http\Requests\SignupEmailRequest;
 use App\Http\Requests\SignupPhoneRequest;
 use App\Http\Requests\VerifyEmailRequest;
@@ -98,55 +101,71 @@ class SignupController extends Controller
     {
         return response(['status' => true, 'message' => trans('all.message.the_form_is_valid')]);
     }
+
+    public function organizations()
+    {
+        return OrganizationResource::collection(
+            Organization::where('status', Status::ACTIVE)
+                ->orderBy('country')
+                ->orderBy('name')
+                ->get()
+        );
+    }
+
     public function register(SignupRequest $request)
     {
 
-        if (
-            !blank($request->phone) && Settings::group('site')->get('site_phone_verification') === Ask::YES &&
-            (env('DEMO') !== "true" && env('DEMO') !== "TRUE" && env('DEMO') !== "True" &&
-                env('DEMO') !== true && env('DEMO') !== TRUE && env('DEMO') !== True && env('DEMO') !== '1' && env('DEMO') !== 1)
-        ) {
-
-            $otp = DB::table('otps')->where([
-                ['phone', $request->post('phone')],
-            ]);
-            $otpCheck = $otp->first();
-            if ($otp->exists() && $otpCheck->is_verified == Ask::YES) {
-                $otp->delete();
+        $user = DB::transaction(function () use ($request) {
+            $organization = null;
+            if ($request->post('organization_mode') === 'new') {
+                $organization = Organization::firstOrCreate(
+                    [
+                        'name'    => $request->post('organization_name'),
+                        'country' => $request->post('country'),
+                    ],
+                    [
+                        'address'   => $request->post('address'),
+                        'type'      => 'organization',
+                        'status'    => Status::ACTIVE,
+                        'is_seeded' => Ask::NO,
+                    ]
+                );
             } else {
-                return response(['status' => true, 'message' => trans('all.message.phone_not_verified')]);
+                $organization = Organization::find($request->post('organization_id'));
             }
-        } else if (
-            !blank($request->email) && Settings::group('site')->get('site_email_verification') === Ask::YES &&
-            (env('DEMO') !== "true" && env('DEMO') !== "TRUE" && env('DEMO') !== "True" &&
-                env('DEMO') !== true && env('DEMO') !== TRUE && env('DEMO') !== True && env('DEMO') !== '1' && env('DEMO') !== 1)
-        ) {
 
-            $otp = DB::table('password_reset_tokens')->where([
-                ['email', $request->post('email')],
+            $user = User::create([
+                'name'              => $request->post('name'),
+                'username'          => Str::slug($request->post('name')) . '-' . Str::lower(Str::random(8)),
+                'email'             => $request->post('email'),
+                'phone'             => $request->post('phone'),
+                'country_code'      => $request->post('country_code'),
+                'organization_id'   => $organization?->id,
+                'signup_country'    => $request->post('country'),
+                'signup_address'    => $request->post('address'),
+                'email_verified_at' => Carbon::now(),
+                'is_guest'          => Ask::NO,
+                'status'            => Status::INACTIVE,
+                'password'          => Hash::make($request->post('password'))
             ]);
-            $otpCheck = $otp->first();
-            if ($otp->exists() && $otpCheck->is_verified == Ask::YES) {
-                $otp->delete();
-            } else {
-                return response(['status' => true, 'message' => trans('all.message.email_not_verified')]);
-            }
-        }
 
+            $user->assignRole(EnumRole::CUSTOMER);
 
-        $user = User::create([
-            'name' => $request->post('name'),
-            'username' => Str::slug($request->post('name')) . rand(1, 500),
-            'email' => $request->post('email'),
-            'phone' => $request->post('phone'),
-            'country_code' => $request->post('country_code'),
-            'email_verified_at' => Carbon::now()->getTimestamp(),
-            'is_guest' => Ask::NO,
-            'password' => Hash::make($request->post('password'))
-        ]);
-        $user->assignRole(EnumRole::CUSTOMER);
+            Address::create([
+                'full_name'    => $request->post('name'),
+                'email'        => $request->post('email'),
+                'country_code' => $request->post('country_code'),
+                'phone'        => $request->post('phone'),
+                'country'      => $request->post('country'),
+                'address'      => $request->post('address'),
+                'user_id'      => $user->id,
+            ]);
+
+            return $user;
+        });
+
         if ($user) {
-            return response(['status' => true, 'message' => trans('all.message.register_successfully')]);
+            return response(['status' => true, 'message' => trans('all.message.signup_pending_approval')]);
         } else {
             return response(['status' => false, 'message' => trans('all.message.register_not_completed')], 422);
         }
@@ -161,7 +180,7 @@ class SignupController extends Controller
             } else {
                 $user = User::where(['email' => $request->email])->first();
             }
-            if ($user) {
+            if ($user && (int)$user->status === Status::ACTIVE) {
                 Auth::guard('web')->loginUsingId($user->id);
                 $this->token = $user->createToken('auth_token')->plainTextToken;
                 $permission = PermissionResource::collection($this->permissionService->permission($user->roles[0]));
@@ -175,6 +194,8 @@ class SignupController extends Controller
                     'permission' => $permission,
                     'defaultPermission' => $defaultPermission,
                 ], 201);
+            } else if ($user) {
+                return response(['status' => false, 'message' => trans('all.message.account_pending_approval')], 422);
             } else {
                 return response(['status' => false, 'message' => trans('all.message.register_not_completed')], 422);
             }
