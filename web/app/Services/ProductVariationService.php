@@ -19,6 +19,8 @@ use App\Http\Requests\ProductVariationRequest;
 
 class ProductVariationService
 {
+    private const STOREFRONT_PRODUCT_STOCK_COLUMNS = 'product:id,offer_start_date,offer_end_date,discount,show_stock_out,can_purchasable,maximum_purchase_quantity,source_type,supermarket_available_quantity';
+
     public object $productVariation;
     protected array $productVariationFilter = [
         'product_attribute_id',
@@ -111,7 +113,7 @@ class ProductVariationService
             $variations = $product->variations;
             if (count($variations)) {
                 $variations = $product->variations()
-                    ->with(['productAttribute:id,name', 'productAttributeOption:id,name', 'product:id,offer_start_date,offer_end_date,discount,show_stock_out,can_purchasable,maximum_purchase_quantity'])
+                    ->with(['productAttribute:id,name', 'productAttributeOption:id,name', self::STOREFRONT_PRODUCT_STOCK_COLUMNS])
                     ->get();
 
                 $variations->each(function ($variation) {
@@ -133,7 +135,7 @@ class ProductVariationService
     public function childrenVariation(ProductVariation $productVariation): \Illuminate\Database\Eloquent\Collection
     {
         try {
-            return $productVariation->children()->with(['productAttribute:id,name', 'productAttributeOption:id,name', 'product:id,offer_start_date,offer_end_date,discount,show_stock_out,can_purchasable,maximum_purchase_quantity'])->withSum('stockItems', 'quantity')->get();
+            return $productVariation->children()->with(['productAttribute:id,name', 'productAttributeOption:id,name', self::STOREFRONT_PRODUCT_STOCK_COLUMNS])->withSum('stockItems', 'quantity')->get();
         } catch (Exception $exception) {
             Log::info($exception->getMessage());
             throw new Exception(QueryExceptionLibrary::message($exception), 422);
@@ -145,7 +147,13 @@ class ProductVariationService
      */
     public function allVariation(Product $product)
     {
-        return ProductVariation::tree()->depthFirst()->where('product_id', $product->id)->withSum('stockItems', 'quantity')->get()->toTree();
+        return ProductVariation::tree()
+            ->depthFirst()
+            ->where('product_id', $product->id)
+            ->with(['productAttribute:id,name', 'productAttributeOption:id,name', self::STOREFRONT_PRODUCT_STOCK_COLUMNS])
+            ->withSum('stockItems', 'quantity')
+            ->get()
+            ->toTree();
     }
 
     /**
@@ -522,7 +530,7 @@ class ProductVariationService
     public function barcodeVariationProduct(ProductVariation $productVariation)
     {
         try {
-            return ProductVariation::where('id', $productVariation->id)->with(['productAttribute:id,name', 'productAttributeOption:id,name', 'product:id,offer_start_date,offer_end_date,discount,show_stock_out,can_purchasable'])->withSum('stockItems', 'quantity')->first();
+            return ProductVariation::where('id', $productVariation->id)->with(['productAttribute:id,name', 'productAttributeOption:id,name', self::STOREFRONT_PRODUCT_STOCK_COLUMNS])->withSum('stockItems', 'quantity')->first();
         } catch (Exception $exception) {
             Log::info($exception->getMessage());
             throw new Exception(QueryExceptionLibrary::message($exception), 422);
