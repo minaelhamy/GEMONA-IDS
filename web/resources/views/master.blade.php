@@ -36,6 +36,13 @@
     <meta name="twitter:description" content="{{ $siteDescription }}">
     <meta name="twitter:image" content="{{ $socialImage }}">
 
+    <script>
+        window.GEMONA_CONFIG = {
+            apiUrl: @json(config('app.url')),
+            apiKey: @json(env('VITE_API_KEY')),
+        };
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @if (!blank($analytics))
