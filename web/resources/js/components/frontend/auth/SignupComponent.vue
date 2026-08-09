@@ -4,11 +4,7 @@
         <div class="w-full hidden sm:flex sm:max-w-xs md:max-w-sm flex-shrink-0 bg-[#f7f3fb] items-center justify-center p-8">
             <div class="text-center">
                 <img :src="APP_URL + '/images/required/gemona-signup.png'" alt="GEMONA"
-                    class="w-56 max-w-full mx-auto mb-6" loading="lazy">
-                <h4 class="text-xl font-bold text-primary mb-3">{{ $t('message.signup_destination_title') }}</h4>
-                <p class="text-sm leading-6 text-[#6E7191]">
-                    {{ $t('message.signup_destination_text') }}
-                </p>
+                    class="w-56 max-w-full mx-auto" loading="lazy">
             </div>
         </div>
         <form class="w-full p-6" @submit.prevent="signup">

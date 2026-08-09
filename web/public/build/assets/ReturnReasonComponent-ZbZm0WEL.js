@@ -1,1 +1,0 @@
-import{_ as o,r as n,o as t,k as r}from"./app-BzYP6OHz.js";const s={name:"ReturnReasonComponent"};function a(c,p,_,m,u,f){const e=n("router-view");return t(),r(e)}const d=o(s,[["render",a]]);export{d as default};

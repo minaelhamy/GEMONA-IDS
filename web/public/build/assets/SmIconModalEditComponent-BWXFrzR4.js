@@ -1,0 +1,1 @@
+import{_ as s,o as e,c as a,a as o,t as c}from"./app-CoHuyomw.js";const i={name:"SmIconModalEditComponent"},l={class:"db-table-action edit modal-btn"},d={class:"db-tooltip"};function r(n,t,p,m,_,b){return e(),a("button",l,[t[0]||(t[0]=o("i",{class:"lab lab-line-edit"},null,-1)),o("span",d,c(n.$t("button.edit")),1)])}const f=s(i,[["render",r]]);export{f as S};
