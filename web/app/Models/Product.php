@@ -314,14 +314,24 @@ class Product extends Model implements HasMedia
 
     public function scopeWithDisplayImage($query)
     {
-        return $query->where(function ($query) {
-            $query->where(function ($query) {
-                $query->whereNotNull('external_image_url')
-                    ->whereRaw("TRIM(external_image_url) != ''");
-            })->orWhereHas('media', function ($media) {
-                $media->where('collection_name', 'product');
-            });
+        return $query->whereHas('media', function ($media) {
+            $media->where('collection_name', 'product');
         });
+    }
+
+    public function hasDisplayImage(): bool
+    {
+        $media = $this->getFirstMedia('product');
+
+        if ($media === null) {
+            return false;
+        }
+
+        try {
+            return file_exists($media->getPath()) && file_exists($media->getPath('cover'));
+        } catch (\Throwable $exception) {
+            return false;
+        }
     }
 
     public function wishlist()

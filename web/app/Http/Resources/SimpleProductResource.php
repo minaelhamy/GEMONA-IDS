@@ -17,12 +17,14 @@ class SimpleProductResource extends JsonResource
     public function toArray($request)
     {
         $price = count($this->variations) > 0 ? $this->variation_price : $this->selling_price;
+        $cover = $this->cover;
         return [
             'id'                => $this->id,
             'name'              => $this->name,
             'slug'              => $this->slug,
             'currency_price'    => AppLibrary::currencyAmountFormat($price),
-            'cover'             => $this->cover,
+            'cover'             => $cover,
+            'has_image'         => $this->hasDisplayImage() && !str_contains($cover, '/images/default/product/'),
             'flash_sale'        => $this->add_to_flash_sale == Ask::YES,
             'is_offer'          => AppLibrary::isBetweenDate($this->offer_start_date, $this->offer_end_date),
             'discounted_price'  => AppLibrary::currencyAmountFormat($price - (($price / 100) * $this->discount)),

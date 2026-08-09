@@ -1,10 +1,10 @@
 <template>
     <LoadingComponent :props="loading" />
-    <section v-if="categories.length > 0" class="sm:mb-10">
+    <section v-if="displayCategories.length > 0" class="sm:mb-10">
         <div class="container">
             <h2 class="text-2xl sm:text-4xl font-bold -mb-10">{{ $t('label.browse_by_categories')}}</h2>
             <Swiper dir="ltr" :speed="1000" :loop="true" :navigation="true" :modules="modules" class="navigate-swiper" :breakpoints="breakpoints">
-                <SwiperSlide v-for="category in categories" class="mobile:!w-24">
+                <SwiperSlide v-for="category in displayCategories" class="mobile:!w-24">
                     <router-link :to="{name: 'frontend.product', query:{ category: category.slug}}"
                                  class="w-full rounded-2xl shadow-xs group">
                         <img class="w-full h-[120px] object-cover block rounded-tl-2xl rounded-tr-2xl" :src="category.thumb" alt="category" >
@@ -63,12 +63,20 @@ export default {
         categories: function () {
             return this.$store.getters["frontendProductCategory/lists"];
         },
+        displayCategories: function () {
+            if (!this.categories || !this.categories.length) {
+                return [];
+            }
+            return this.categories.filter((category) => {
+                return category.thumb && !category.thumb.includes('/images/default/category/');
+            }).slice(0, 18);
+        },
     },
     mounted() {
         this.loading.isActive = true;
         this.$store.dispatch("frontendProductCategory/lists", {
             paginate: 1,
-            per_page: 18,
+            per_page: 60,
             order_column: "id",
             order_type: "asc",
             parent_id: null,

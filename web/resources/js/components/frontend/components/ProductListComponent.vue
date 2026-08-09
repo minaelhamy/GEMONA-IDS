@@ -74,6 +74,9 @@ export default {
                 return [];
             }
             return this.products.filter((product) => {
+                if (Object.prototype.hasOwnProperty.call(product, 'has_image')) {
+                    return product.has_image === true;
+                }
                 return product.cover && !product.cover.includes('/images/default/product/');
             });
         },

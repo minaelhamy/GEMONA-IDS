@@ -43,6 +43,9 @@ export default {
                 return [];
             }
             return this.products.filter((product) => {
+                if (Object.prototype.hasOwnProperty.call(product, 'has_image')) {
+                    return product.has_image === true;
+                }
                 return product.cover && !product.cover.includes('/images/default/product/');
             }).slice(0, 8);
         },
@@ -51,7 +54,8 @@ export default {
         this.loading.isActive = true;
         this.$store.dispatch("frontendProduct/popularProducts", {
             paginate: 0,
-            rand: 24
+            order_column: "id",
+            order_type: "desc"
         }).then(res => {
             this.loading.isActive = false;
         }).catch((err) => {

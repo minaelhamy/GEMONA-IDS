@@ -1,1 +1,0 @@
-import{_ as o,o as s,c as a,a as e,t as l}from"./app-CCkIyuWs.js";const r={name:"FilterComponent"},i={class:"db-card-filter-btn table-filter-btn"};function c(n,t,p,f,b,_){return s(),a("button",i,[t[0]||(t[0]=e("i",{class:"lab lab-line-filter lab-font-size-14"},null,-1)),e("span",null,l(n.$t("button.filter")),1)])}const m=o(r,[["render",c]]);export{m as F};
