@@ -13,7 +13,7 @@
 
             <router-link class="overflow-hidden rounded-xl w-full"
                 :to="{ name: 'frontend.product.details', params: { slug: product.slug } }">
-                <img :src="product.cover" alt="product"
+                <img :src="product.cover" alt="product" loading="lazy" decoding="async"
                     class="w-full rounded-xl transition-all duration-300 group-hover:scale-105 group-hover:rotate-3">
             </router-link>
         </div>

@@ -1,4 +1,4 @@
-import  HomeComponent from "../../components/frontend/home/HomeComponent";
+const  HomeComponent = () => import("../../components/frontend/home/HomeComponent");
 const  WishlistComponent = () => import("../../components/frontend/wishlist/WishlistComponent");
 const  OrderHistoryComponent = () => import("../../components/frontend/account/orderHistory/OrderHistoryComponent");
 const  ReturnOrdersComponent = () => import("../../components/frontend/account/returnOrders/ReturnOrdersComponent");

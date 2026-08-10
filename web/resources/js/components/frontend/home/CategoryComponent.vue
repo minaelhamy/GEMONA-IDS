@@ -7,7 +7,7 @@
                 <SwiperSlide v-for="category in displayCategories" class="mobile:!w-24">
                     <router-link :to="{name: 'frontend.product', query:{ category: category.slug}}"
                                  class="w-full rounded-2xl shadow-xs group">
-                        <img class="w-full h-[120px] object-cover block rounded-tl-2xl rounded-tr-2xl" :src="category.thumb" alt="category" >
+                        <img class="w-full h-[120px] object-cover block rounded-tl-2xl rounded-tr-2xl" :src="category.thumb" alt="category" loading="lazy" decoding="async">
                         <span class="text-sm sm:text-xl font-medium capitalize text-center py-2 px-3 overflow-hidden whitespace-nowrap text-ellipsis block rounded-bl-2xl rounded-br-2xl group-hover:text-primary">
                             {{ category.name }}
                         </span>

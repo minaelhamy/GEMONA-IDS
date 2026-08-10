@@ -1,0 +1,1 @@
+import{_ as e,r as n,o as t,k as r}from"./app-BLPEM11I.js";const c={name:"AnalyticComponent"};function s(a,p,_,i,m,f){const o=n("router-view");return t(),r(o)}const u=e(c,[["render",s]]);export{u as default};

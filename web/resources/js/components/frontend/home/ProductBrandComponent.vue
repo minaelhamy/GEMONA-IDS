@@ -10,7 +10,7 @@
                 <SwiperSlide v-for="brand in brands" class="mobile:!w-[120px]">
                     <router-link :to="{name: 'frontend.product', query:{ brand: brand.id }}" class="w-full rounded-2xl shadow-xs group border border-gray-100">
                         <figure class="w-full h-[120px] flex items-center justify-center">
-                            <img :src="brand.cover" alt="brand" class="w-14">
+                            <img :src="brand.cover" alt="brand" class="w-14" loading="lazy" decoding="async">
                         </figure>
                         <span class="text-sm sm:text-lg font-medium capitalize text-center pb-3 block group-hover:text-primary">
                                 {{ brand.name }}
