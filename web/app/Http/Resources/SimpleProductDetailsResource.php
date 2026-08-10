@@ -40,7 +40,9 @@ class SimpleProductDetailsResource extends JsonResource
             'unit'                      => $this->unit?->name,
             'stock'                     => $this->storefrontStock((int) $this->stock_items_sum_quantity),
             'sku'                       => $this->sku,
-            "maximum_purchase_quantity" => $this->maximum_purchase_quantity,
+            "maximum_purchase_quantity" => $this->source_type === 'supermarket'
+                ? $this->storefrontStock((int) $this->stock_items_sum_quantity)
+                : $this->maximum_purchase_quantity,
             'shipping'                  => [
                 'shipping_type'                => $this->shipping_type,
                 'shipping_cost'                => $this->shipping_cost,

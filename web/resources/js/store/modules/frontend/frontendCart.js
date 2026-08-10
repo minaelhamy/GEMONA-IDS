@@ -91,14 +91,7 @@ export const frontendCart = {
                             if (list.product_id === payload.product_id && list.variation_id === payload.variation_id) {
                                 productMatch = true;
                                 if ((payload.quantity + list.quantity) <= list.stock) {
-                                    if ((payload.quantity + list.quantity) <= list.maximum_purchase_quantity) {
-                                        context.state.lists[listKey].quantity += payload.quantity;
-                                    } else {
-                                        reject({
-                                            message: "maximum_quantity",
-                                            status: false
-                                        });
-                                    }
+                                    context.state.lists[listKey].quantity += payload.quantity;
                                 } else {
                                     reject({
                                         message: "stockOut",

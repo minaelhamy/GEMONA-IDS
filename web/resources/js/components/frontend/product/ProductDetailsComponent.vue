@@ -78,16 +78,11 @@
                                 <input type="number" v-model="temp.quantity" v-on:keypress="onlyNumber($event)"
                                     v-on:keyup="quantityUp" class="text-center w-full h-5 text-sm font-medium">
                                 <button @click.prevent="quantityIncrement" type="button"
-                                    :class="temp.stock === temp.quantity ? 'cursor-not-allowed' : temp.quantity === temp.maximum_purchase_quantity ? 'cursor-not-allowed' : ''"
+                                    :class="temp.stock === temp.quantity ? 'cursor-not-allowed' : ''"
                                     class="lab-fill-circle-plus text-lg leading-none transition-all duration-300 hover:text-primary"></button>
                             </div>
                             <div v-if="!initialVariations.length || selectedVariation != null">
-                                <p v-if="temp.stock > 0" class="capitalize">
-                                    {{ $t('label.available') }}:
-                                    <b>({{ temp.stock }}) </b>
-                                    {{ product.unit }}
-                                </p>
-                                <p v-else class="capitalize text-danger">
+                                <p v-if="temp.stock <= 0" class="capitalize text-danger">
                                     {{ $t('label.stock_out') }}
                                 </p>
                             </div>
@@ -542,11 +537,6 @@ export default {
                 this.temp.quantity = this.temp.stock
             }
 
-            if (this.temp.quantity > this.temp.maximum_purchase_quantity) {
-                alertService.error(this.$t('message.purchase_limit_exceeded'));
-                this.temp.quantity = this.temp.maximum_purchase_quantity
-            }
-
             this.totalPriceSetup();
         },
         quantityIncrement: function () {
@@ -559,9 +549,6 @@ export default {
                 this.temp.quantity--;
             }
 
-            if (this.temp.quantity > this.temp.maximum_purchase_quantity) {
-                this.temp.quantity--;
-            }
             this.totalPriceSetup();
         },
         quantityDecrement: function () {

@@ -35,7 +35,9 @@ class SimpleProductVariationResource extends JsonResource
             'discount_percentage'           => AppLibrary::convertAmountFormat($this->product?->discount),
             'sku'                           => $this->sku,
             'stock'                         => $this->product?->storefrontStock((int) $this->stock_items_sum_quantity) ?? 0,
-            "maximum_purchase_quantity"     => $this->product?->maximum_purchase_quantity,
+            "maximum_purchase_quantity"     => $this->product?->source_type === 'supermarket'
+                ? ($this->product?->storefrontStock((int) $this->stock_items_sum_quantity) ?? 0)
+                : $this->product?->maximum_purchase_quantity,
         ];
     }
 }

@@ -112,7 +112,7 @@ class RepairSupermarketCatalog extends Command
             $query->update([
                 'can_purchasable' => Ask::YES,
                 'show_stock_out' => Activity::DISABLE,
-                'maximum_purchase_quantity' => DB::raw('GREATEST(maximum_purchase_quantity, 10)'),
+                'maximum_purchase_quantity' => Product::SUPERMARKET_ORDERABLE_QUANTITY,
             ]);
         }
 

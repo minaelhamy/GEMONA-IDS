@@ -1,1 +1,0 @@
-import{_ as e,r as n,o as t,k as r}from"./app-Dda_VYXU.js";const s={name:"TaxComponent"};function a(c,p,_,m,f,i){const o=n("router-view");return t(),r(o)}const x=e(s,[["render",a]]);export{x as default};

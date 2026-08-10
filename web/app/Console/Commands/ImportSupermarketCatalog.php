@@ -132,7 +132,7 @@ class ImportSupermarketCatalog extends Command
                     'status' => Status::ACTIVE,
                     'can_purchasable' => Ask::YES,
                     'show_stock_out' => Activity::DISABLE,
-                    'maximum_purchase_quantity' => 10,
+                    'maximum_purchase_quantity' => Product::SUPERMARKET_ORDERABLE_QUANTITY,
                     'low_stock_quantity_warning' => 1,
                     'refundable' => Ask::YES,
                     'description' => $description,

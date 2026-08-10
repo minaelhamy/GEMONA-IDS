@@ -44,7 +44,7 @@
                                     type="number" v-model="cart.quantity"
                                     class="text-center w-full h-5 text-sm font-medium">
                                 <button
-                                    :class="cart.quantity >= cart.stock ? 'cursor-not-allowed' : cart.quantity >= cart.maximum_purchase_quantity ? 'cursor-not-allowed' : ''"
+                                    :class="cart.quantity >= cart.stock ? 'cursor-not-allowed' : ''"
                                     @click.prevent="quantityIncrement(index, cart)" type="button"
                                     class="lab-fill-circle-plus text-lg leading-none transition-all duration-300 hover:text-primary"></button>
                             </div>
@@ -130,10 +130,6 @@ export default {
             if (quantity > product.stock) {
                 quantity = product.stock
             }
-            if (quantity > product.maximum_purchase_quantity) {
-                alertService.error(this.$t('message.purchase_limit_exceeded'));
-                quantity = product.maximum_purchase_quantity
-            }
             this.$store.dispatch('frontendCart/quantity', { id: id, status: quantity }).then().catch();
         },
         quantityIncrement: function (id, product) {
@@ -144,9 +140,6 @@ export default {
             }
 
             if (quantity > product.stock) {
-                quantity--;
-            }
-            if (quantity > product.maximum_purchase_quantity) {
                 quantity--;
             }
             this.$store.dispatch('frontendCart/quantity', { id: id, status: quantity }).then().catch();

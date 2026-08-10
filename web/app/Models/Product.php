@@ -20,6 +20,8 @@ class Product extends Model implements HasMedia
 {
     use HasFactory, InteractsWithMedia, SoftDeletes;
 
+    public const SUPERMARKET_ORDERABLE_QUANTITY = 999999;
+
     protected $table = "products";
     protected $fillable = [
         'name',
@@ -138,12 +140,7 @@ class Product extends Model implements HasMedia
 
     public function supermarketOrderableQuantity(): int
     {
-        return max(
-            (int) ($this->supermarket_available_quantity ?? 0),
-            (int) ($this->maximum_purchase_quantity ?? 0),
-            (int) env('NON_PURCHASE_QUANTITY', 100),
-            1
-        );
+        return self::SUPERMARKET_ORDERABLE_QUANTITY;
     }
 
     public function getImageAttribute(): string
