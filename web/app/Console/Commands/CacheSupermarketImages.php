@@ -16,6 +16,7 @@ class CacheSupermarketImages extends Command
 {
     protected $signature = 'supermarket:cache-images
         {--limit= : Maximum number of products to process in this run}
+        {--source= : Only cache products that have candidates from this source, for example amazon_eg}
         {--force : Replace existing imported supermarket product images}
         {--progress-every=100 : Print progress after this many products}';
 
@@ -24,6 +25,7 @@ class CacheSupermarketImages extends Command
     public function handle(): int
     {
         $limit = $this->option('limit') !== null ? max(0, (int) $this->option('limit')) : null;
+        $source = trim((string) $this->option('source'));
         $force = (bool) $this->option('force');
         $progressEvery = max(1, (int) $this->option('progress-every'));
         $tempDir = storage_path('app/supermarket-image-imports');
@@ -34,6 +36,10 @@ class CacheSupermarketImages extends Command
             ->select(['id', 'name', 'sku', 'external_image_url'])
             ->where('source_type', 'supermarket')
             ->orderBy('id');
+
+        if ($source !== '') {
+            $query->whereHas('supermarketSources', fn ($sourceQuery) => $sourceQuery->where('source', $source));
+        }
 
         if (!$force) {
             $query->whereDoesntHave('media', fn ($media) => $media->where('collection_name', 'product'));
