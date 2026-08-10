@@ -1,112 +1,117 @@
 from __future__ import annotations
 
-import os
-import time
+import re
+import sys
 from collections.abc import Iterable
 from typing import Any
+from urllib.parse import quote_plus
 
-import requests
+from bs4 import BeautifulSoup
 
+from ..http import HttpClient
 from ..models import Product
-from ..normalize import clean_text, should_skip_cold_chain
+from ..normalize import absolute_url, clean_text, parse_price, should_skip_cold_chain
 from .base import Source
 
+
+FBA_REFINEMENT = "p_98:21909049031"
 
 AMAZON_EG_CATEGORIES = [
     {
         "name": "Mobiles, Tablets & Accessories",
-        "search_index": "Electronics",
-        "keywords": "mobiles tablets accessories",
+        "keywords": ["mobiles tablets accessories", "mobile phones", "tablets"],
+        "department": "electronics",
+        "nodes": ["21832868031", "21832883031"],
     },
     {
         "name": "Computers & Office Supplies",
-        "search_index": "OfficeProducts",
-        "keywords": "computers office supplies",
+        "keywords": ["computers office supplies", "laptops", "office supplies"],
+        "department": "computers",
+        "nodes": [],
     },
     {
         "name": "TVs & Electronics",
-        "search_index": "Electronics",
-        "keywords": "tv electronics",
+        "keywords": ["tv electronics", "television", "electronics"],
+        "department": "electronics",
+        "nodes": [],
     },
     {
         "name": "Women's Fashion",
-        "search_index": "Fashion",
-        "keywords": "women fashion",
+        "keywords": ["women fashion", "women clothing", "women shoes"],
+        "department": "fashion",
+        "nodes": [],
     },
     {
         "name": "Men's Fashion",
-        "search_index": "Fashion",
-        "keywords": "men fashion",
+        "keywords": ["men fashion", "men clothing", "men shoes"],
+        "department": "fashion",
+        "nodes": [],
     },
     {
         "name": "Kids Fashion",
-        "search_index": "Fashion",
-        "keywords": "kids fashion",
+        "keywords": ["kids fashion", "kids clothing", "kids shoes"],
+        "department": "fashion",
+        "nodes": [],
     },
     {
         "name": "Health, Beauty & Perfumes",
-        "search_index": "Beauty",
-        "keywords": "health beauty perfumes",
+        "keywords": ["health beauty perfumes", "beauty", "perfume"],
+        "department": "beauty",
+        "nodes": ["18017988031"],
     },
     {
         "name": "Supermarket",
-        "search_index": "Grocery",
-        "keywords": "supermarket grocery",
+        "keywords": ["supermarket grocery", "grocery", "food"],
+        "department": "grocery",
+        "nodes": [],
     },
     {
         "name": "Home, Furniture & Tools",
-        "search_index": "HomeImprovement",
-        "keywords": "home furniture tools",
+        "keywords": ["home furniture tools", "furniture", "tools"],
+        "department": None,
+        "nodes": ["18021933031"],
     },
     {
         "name": "Kitchen & Appliances",
-        "search_index": "Home",
-        "keywords": "kitchen appliances",
+        "keywords": ["kitchen appliances", "kitchen", "appliances"],
+        "department": "kitchen",
+        "nodes": ["18021933031"],
     },
     {
         "name": "Toys, Games & Baby",
-        "search_index": "Toys",
-        "keywords": "toys games baby",
+        "keywords": ["toys games baby", "toys", "baby toys"],
+        "department": "toys",
+        "nodes": [],
     },
     {
         "name": "Sports, Fitness & Outdoors",
-        "search_index": "SportsAndOutdoors",
-        "keywords": "sports fitness outdoors",
+        "keywords": ["sports fitness outdoors", "sports", "fitness"],
+        "department": "sporting",
+        "nodes": [],
     },
 ]
 
 
 class AmazonEgSource(Source):
     name = "amazon_eg"
-    marketplace = "www.amazon.eg"
-    api_url = "https://creatorsapi.amazon/catalog/v1/searchItems"
+    base_url = "https://www.amazon.eg"
+    max_pages_per_seed = 10
 
-    resources = [
-        "images.primary.large",
-        "itemInfo.byLineInfo",
-        "itemInfo.classifications",
-        "itemInfo.features",
-        "itemInfo.productInfo",
-        "itemInfo.technicalInfo",
-        "itemInfo.title",
-        "offersV2.listings.availability",
-        "offersV2.listings.condition",
-        "offersV2.listings.isBuyBoxWinner",
-        "offersV2.listings.merchantInfo",
-        "offersV2.listings.price",
-        "offersV2.listings.type",
-        "parentASIN",
-    ]
-
-    def __init__(self, client: Any | None = None) -> None:
-        super().__init__(client=client)
-        self.session = requests.Session()
-        self._access_token: str | None = None
-        self._token_expires_at = 0.0
+    def __init__(self, client: HttpClient | None = None) -> None:
+        super().__init__(client=client or HttpClient(delay_seconds=1.5))
+        self.client.session.headers.update(
+            {
+                "Accept-Encoding": "gzip, deflate, br",
+                "Accept-Language": "en-AE,en;q=0.9,ar;q=0.7",
+                "Cache-Control": "no-cache",
+                "Pragma": "no-cache",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
 
     def scrape(self, *, query: str | None = None, limit: int | None = None) -> Iterable[Product]:
         category = self._category_for_query(query)
-        yield from self._search_category(category, limit=limit)
+        yield from self._crawl_category(category, limit=limit)
 
     def crawl(
         self,
@@ -119,7 +124,7 @@ class AmazonEgSource(Source):
         emitted = 0
 
         for category in categories:
-            for product in self._search_category(category, limit=None):
+            for product in self._crawl_category(category, limit=None):
                 if product.private_key in seen:
                     continue
 
@@ -130,193 +135,143 @@ class AmazonEgSource(Source):
                 if limit and emitted >= limit:
                     return
 
-    def _category_for_query(self, query: str | None) -> dict[str, str]:
+    def _category_for_query(self, query: str | None) -> dict[str, Any]:
         query = clean_text(query)
         if not query:
             return AMAZON_EG_CATEGORIES[0]
 
         normalized = query.lower()
         for category in AMAZON_EG_CATEGORIES:
-            if normalized in {
-                category["name"].lower(),
-                category["search_index"].lower(),
-                category["keywords"].lower(),
-            }:
+            if normalized == category["name"].lower() or normalized in [value.lower() for value in category["keywords"]]:
                 return category
 
-        return {"name": query, "search_index": "All", "keywords": query}
+        return {"name": query, "keywords": [query], "department": None, "nodes": []}
 
-    def _search_category(self, category: dict[str, str], *, limit: int | None) -> Iterable[Product]:
+    def _crawl_category(self, category: dict[str, Any], *, limit: int | None) -> Iterable[Product]:
         emitted = 0
-        total = None
+        seen: set[str] = set()
 
-        for page in range(1, 11):
-            payload = self._search_payload(category, page=page)
-            data = self._post(payload)
-            result = data.get("searchResult") or {}
-            total = total if total is not None else int(result.get("totalResultCount") or 0)
-            items = result.get("items") or []
-            if not items:
-                return
+        for seed_url in self._seed_urls(category):
+            next_url: str | None = seed_url
+            page = 0
 
-            for item in items:
-                product = self._item_to_product(item, category)
-                if not product:
-                    continue
+            while next_url and page < self.max_pages_per_seed:
+                page += 1
+                try:
+                    html = self._fetch_html(next_url)
+                except RuntimeError as exc:
+                    print(f"amazon_eg: skipped {category['name']} page {page}: {exc}", file=sys.stderr, flush=True)
+                    break
 
+                products = list(self._products_from_html(html, category))
+                if not products:
+                    if self._is_sorry_page(html):
+                        print(
+                            f"amazon_eg: skipped {category['name']} page {page}: Amazon returned a sorry page",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                    break
+
+                for product in products:
+                    if product.private_key in seen:
+                        continue
+                    seen.add(product.private_key)
+                    yield product
+                    emitted += 1
+
+                    if limit and emitted >= limit:
+                        return
+
+                next_url = self._next_url(html)
+
+    def _seed_urls(self, category: dict[str, Any]) -> list[str]:
+        urls = []
+
+        for node in category.get("nodes") or []:
+            urls.append(f"{self.base_url}/-/en/s?rh=n%3A{node}%2C{quote_plus(FBA_REFINEMENT)}")
+
+        for keyword in category.get("keywords") or []:
+            keyword_query = quote_plus(keyword)
+            department = category.get("department")
+            if department:
+                urls.append(
+                    f"{self.base_url}/-/en/s?k={keyword_query}&i={quote_plus(department)}&rh={quote_plus(FBA_REFINEMENT)}"
+                )
+            urls.append(f"{self.base_url}/-/en/s?k={keyword_query}&rh={quote_plus(FBA_REFINEMENT)}")
+
+        return list(dict.fromkeys(urls))
+
+    def _fetch_html(self, url: str) -> str:
+        result = self.client.get(url)
+        if result.status_code >= 400:
+            raise RuntimeError(f"HTTP {result.status_code}")
+        return result.text
+
+    def _products_from_html(self, html: str, category: dict[str, Any]) -> Iterable[Product]:
+        if self._is_sorry_page(html):
+            return
+
+        soup = BeautifulSoup(html, "lxml")
+        cards = soup.select('[data-component-type="s-search-result"][data-asin]')
+
+        for card in cards:
+            product = self._product_from_card(card, category)
+            if product:
                 yield product
-                emitted += 1
 
-                if limit and emitted >= limit:
-                    return
+    def _product_from_card(self, card: Any, category: dict[str, Any]) -> Product | None:
+        asin = clean_text(card.get("data-asin"))
+        title_node = card.select_one("h2 a span") or card.select_one("h2 span")
+        title = clean_text(title_node.get_text(" ", strip=True) if title_node else "")
+        image_node = card.select_one("img.s-image")
+        image_url = image_node.get("src") if image_node else None
+        price_node = card.select_one(".a-price .a-offscreen")
+        price = parse_price(price_node.get_text(" ", strip=True) if price_node else None)
+        link_node = card.select_one("h2 a[href]") or card.select_one('a[href*="/dp/"]')
+        product_url = absolute_url(self.base_url, link_node.get("href") if link_node else None)
+        card_text = clean_text(card.get_text(" ", strip=True))
 
-            if emitted >= total:
-                return
-
-    def _search_payload(self, category: dict[str, str], *, page: int) -> dict[str, Any]:
-        return {
-            "marketplace": self.marketplace,
-            "partnerTag": self._required_env("AMAZON_EG_PARTNER_TAG"),
-            "keywords": category["keywords"],
-            "searchIndex": category["search_index"],
-            "itemCount": 10,
-            "itemPage": page,
-            "availability": "Available",
-            "condition": "New",
-            "currencyOfPreference": "EGP",
-            "languagesOfPreference": ["en_AE"],
-            "deliveryFlags": ["FulfilledByAmazon"],
-            "resources": self.resources,
-        }
-
-    def _post(self, payload: dict[str, Any]) -> dict[str, Any]:
-        token = self._token()
-        credential_version = clean_text(os.getenv("AMAZON_CREATORS_CREDENTIAL_VERSION")) or "3.2"
-        authorization = f"Bearer {token}"
-        if credential_version.startswith("2."):
-            authorization = f"{authorization}, Version {credential_version}"
-
-        response = self.session.post(
-            self.api_url,
-            json=payload,
-            headers={
-                "Authorization": authorization,
-                "Content-Type": "application/json",
-                "x-marketplace": self.marketplace,
-            },
-            timeout=30,
-        )
-        if response.status_code >= 400:
-            raise RuntimeError(f"Amazon Creators API failed with HTTP {response.status_code}: {response.text[:500]}")
-        data = response.json()
-        if data.get("errors"):
-            raise RuntimeError(f"Amazon Creators API errors: {data['errors']}")
-        return data
-
-    def _token(self) -> str:
-        now = time.time()
-        if self._access_token and now < self._token_expires_at - 60:
-            return self._access_token
-
-        client_id = self._required_env("AMAZON_CREATORS_CLIENT_ID")
-        client_secret = self._required_env("AMAZON_CREATORS_CLIENT_SECRET")
-        credential_version = clean_text(os.getenv("AMAZON_CREATORS_CREDENTIAL_VERSION")) or "3.2"
-
-        if credential_version.startswith("2."):
-            token_url = (
-                clean_text(os.getenv("AMAZON_CREATORS_TOKEN_URL"))
-                or "https://creatorsapi.auth.eu-south-2.amazoncognito.com/oauth2/token"
-            )
-            response = self.session.post(
-                token_url,
-                data={
-                    "grant_type": "client_credentials",
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "scope": "creatorsapi/default",
-                },
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=30,
-            )
-        else:
-            token_url = (
-                clean_text(os.getenv("AMAZON_CREATORS_TOKEN_URL"))
-                or "https://api.amazon.co.uk/auth/o2/token"
-            )
-            response = self.session.post(
-                token_url,
-                json={
-                    "grant_type": "client_credentials",
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "scope": "creatorsapi::default",
-                },
-                headers={"Content-Type": "application/json"},
-                timeout=30,
-            )
-
-        if response.status_code >= 400:
-            raise RuntimeError(f"Amazon Creators API token request failed with HTTP {response.status_code}: {response.text[:500]}")
-
-        payload = response.json()
-        self._access_token = payload["access_token"]
-        self._token_expires_at = now + int(payload.get("expires_in") or 3600)
-        return self._access_token
-
-    def _item_to_product(self, item: dict[str, Any], category: dict[str, str]) -> Product | None:
-        asin = clean_text(item.get("asin"))
-        item_info = item.get("itemInfo") or {}
-        title = clean_text(((item_info.get("title") or {}).get("displayValue")))
-        listings = (item.get("offersV2") or {}).get("listings") or []
-        if isinstance(listings, dict):
-            listings = [listings]
-        listing = self._best_listing(listings)
-        price = (((listing.get("price") or {}).get("money") or {}).get("amount"))
-        image_url = ((((item.get("images") or {}).get("primary") or {}).get("large") or {}).get("url"))
-        features = ((item_info.get("features") or {}).get("displayValues") or [])
-
-        if not asin or not title or not price or not image_url:
+        if not asin or not title or price is None or not image_url:
             return None
-        if should_skip_cold_chain(title, category["name"], " ".join(str(feature) for feature in features)):
+        if "currently unavailable" in card_text.lower() or "no featured offers available" in card_text.lower():
             return None
-
-        brand = clean_text(((item_info.get("byLineInfo") or {}).get("brand") or {}).get("displayValue"))
-        availability = (listing.get("availability") or {}).get("type")
+        if should_skip_cold_chain(title, category["name"], card_text):
+            return None
 
         return Product(
             source=self.name,
             source_product_id=asin,
             source_sku=asin,
             name=title,
-            price=float(price),
-            currency=(((listing.get("price") or {}).get("money") or {}).get("currency")) or "EGP",
+            price=price,
+            currency="EGP",
             image_url=image_url,
-            description=brand or None,
-            detail="\n".join(clean_text(str(feature)) for feature in features if clean_text(str(feature))) or None,
-            product_url=item.get("detailPageURL"),
+            description=None,
+            detail=self._detail_from_card_text(card_text, title),
+            product_url=product_url,
             category_path=["Amazon.eg", category["name"]],
             raw={
                 "asin": asin,
-                "parent_asin": item.get("parentASIN"),
-                "merchant": (listing.get("merchantInfo") or {}).get("name"),
-                "availability": availability,
-                "delivery_flags": ["FulfilledByAmazon"],
-                "search_index": category["search_index"],
                 "source_category": category["name"],
+                "fulfilled_by_amazon_filter": FBA_REFINEMENT,
             },
         )
 
-    def _best_listing(self, listings: list[dict[str, Any]]) -> dict[str, Any]:
-        if not listings:
-            return {}
-        buy_box = [listing for listing in listings if listing.get("isBuyBoxWinner")]
-        return (buy_box or listings)[0]
+    def _detail_from_card_text(self, card_text: str, title: str) -> str | None:
+        detail = clean_text(card_text.replace(title, " ", 1))
+        detail = re.sub(r"\bAdd to cart\b.*$", "", detail, flags=re.I)
+        return detail[:1000] or None
 
-    def _required_env(self, name: str) -> str:
-        value = clean_text(os.getenv(name))
-        if not value:
-            raise RuntimeError(
-                f"{name} is required for amazon_eg. Add Amazon Creators API credentials to .env "
-                "before enabling the amazon_eg source."
-            )
-        return value
+    def _next_url(self, html: str) -> str | None:
+        soup = BeautifulSoup(html, "lxml")
+        next_link = soup.select_one("a.s-pagination-next[href]")
+        if not next_link:
+            return None
+        if "s-pagination-disabled" in (next_link.get("class") or []):
+            return None
+        return absolute_url(self.base_url, next_link.get("href"))
+
+    def _is_sorry_page(self, html: str) -> bool:
+        lowered = html.lower()
+        return "عذرًا" in html or "sorry" in lowered and "amazon" in lowered and "captcha" in lowered
