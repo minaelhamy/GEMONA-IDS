@@ -121,19 +121,39 @@ class RepairSupermarketCatalog extends Command
 
     private function repairPrices(float $margin, bool $dryRun): int
     {
-        $query = Product::query()
-            ->where('source_type', 'supermarket')
-            ->where('manual_price_override', false)
-            ->whereNotNull('supermarket_base_price')
-            ->whereRaw('ABS(selling_price - ROUND(supermarket_base_price * ?, 2)) > 0.01', [1 + ($margin / 100)]);
+        $sourcePrices = DB::table('supermarket_product_sources')
+            ->select('product_id', DB::raw('MIN(source_price) as min_source_price'))
+            ->where('source_available', true)
+            ->whereNotNull('source_price')
+            ->where('source_price', '>', 0)
+            ->groupBy('product_id');
+
+        $multiplier = 1 + ($margin / 100);
+
+        $query = DB::table('products')
+            ->joinSub($sourcePrices, 'source_prices', function ($join) {
+                $join->on('source_prices.product_id', '=', 'products.id');
+            })
+            ->where('products.source_type', 'supermarket')
+            ->where('products.manual_price_override', false)
+            ->where(function ($query) use ($margin, $multiplier) {
+                $query
+                    ->whereRaw('ABS(products.supermarket_base_price - source_prices.min_source_price) > 0.01')
+                    ->orWhereRaw('ABS(products.selling_price - ROUND(source_prices.min_source_price * ?, 2)) > 0.01', [$multiplier])
+                    ->orWhereRaw('ABS(products.variation_price - ROUND(source_prices.min_source_price * ?, 2)) > 0.01', [$multiplier])
+                    ->orWhereRaw('ABS(products.supermarket_margin_percent - ?) > 0.01', [$margin]);
+            });
 
         $count = (clone $query)->count();
 
         if (!$dryRun) {
             $query->update([
+                'buying_price' => DB::raw('source_prices.min_source_price'),
+                'supermarket_base_price' => DB::raw('source_prices.min_source_price'),
                 'supermarket_margin_percent' => $margin,
-                'selling_price' => DB::raw('ROUND(supermarket_base_price * ' . (1 + ($margin / 100)) . ', 2)'),
-                'variation_price' => DB::raw('ROUND(supermarket_base_price * ' . (1 + ($margin / 100)) . ', 2)'),
+                'selling_price' => DB::raw('ROUND(source_prices.min_source_price * ' . $multiplier . ', 2)'),
+                'variation_price' => DB::raw('ROUND(source_prices.min_source_price * ' . $multiplier . ', 2)'),
+                'updated_at' => now(),
             ]);
         }
 
@@ -335,7 +355,9 @@ class RepairSupermarketCatalog extends Command
     {
         $sources = SupermarketProductSource::query()
             ->where('product_id', $productId)
+            ->where('source_available', true)
             ->whereNotNull('source_price')
+            ->where('source_price', '>', 0)
             ->orderBy('source_price')
             ->get();
 
