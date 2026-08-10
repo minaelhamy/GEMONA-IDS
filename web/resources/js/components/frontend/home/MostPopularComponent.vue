@@ -54,6 +54,7 @@ export default {
         this.loading.isActive = true;
         this.$store.dispatch("frontendProduct/popularProducts", {
             paginate: 0,
+            limit: 8,
             order_column: "id",
             order_type: "desc"
         }).then(res => {

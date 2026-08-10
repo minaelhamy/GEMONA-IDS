@@ -334,12 +334,14 @@ class ProductService
 
             $method      = $request->get('paginate', 0) == 1 ? 'paginate' : 'get';
             $methodValue = $request->get('paginate', 0) == 1 ? $request->get('per_page', 32) : '*';
+            $limit       = max(1, min(32, (int)$request->get('limit', $request->get('per_page', 8))));
             $orderColumn = $request->get('order_column') ?? 'id';
             $orderType   = $request->get('order_type') ?? 'desc';
             $rand        = $request->get('rand', 0) > 0 ? $request->get('rand') : 0;
 
             $query = Product::select('products.id', 'products.name', 'products.sku', 'products.slug', 'products.selling_price', 'products.variation_price', 'products.add_to_flash_sale', 'products.offer_start_date', 'products.offer_end_date', 'products.discount', 'products.status', 'products.external_image_url')
                 ->with(['wishlist' => fn($query) => $query->where('user_id', Auth::check() ? Auth::user()->id : 0)])
+                ->with('media', 'variations')
                 ->withReviewRating()
                 ->withDisplayImage()
                 ->where(['status' => Status::ACTIVE]);
@@ -352,6 +354,7 @@ class ProductService
                 ->withCount('orderCountable')
                 ->orderBy('order_countable_count', 'desc')
                 ->orderBy($orderColumn, $orderType)
+                ->when($method === 'get', fn($query) => $query->limit($limit))
                 ->$method($methodValue);
         } catch (Exception $exception) {
             Log::info($exception->getMessage());
