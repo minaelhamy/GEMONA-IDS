@@ -14,6 +14,7 @@ use App\Models\ProductVariation;
 use App\Models\ProductCategory;
 use App\Models\SupermarketProductSource;
 use App\Models\Unit;
+use App\Support\SupermarketImageGuard;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
@@ -166,7 +167,7 @@ class ImportSupermarketCatalog extends Command
                             'source_sku' => $row['source_sku'] ?? null,
                             'source_price' => $row['price'] ?? null,
                             'source_currency' => $row['currency'] ?? 'EGP',
-                            'source_image_url' => $row['image_url'] ?? null,
+                            'source_image_url' => SupermarketImageGuard::cleanUrl($row['image_url'] ?? null),
                             'source_product_url' => $row['product_url'] ?? null,
                             'source_category_path' => $row['category_path'] ?? null,
                             'source_available' => $sourceAvailability['available'],
@@ -235,24 +236,18 @@ class ImportSupermarketCatalog extends Command
         $canonical['name'] = $cluster['canonical_name'] ?? $canonical['name'] ?? null;
         $canonical['image_url'] = $this->imageUrlFor($canonical, $candidateRows);
 
-        return empty($canonical['name']) ? null : $canonical;
+        return empty($canonical['name']) || empty($canonical['image_url']) ? null : $canonical;
     }
 
     private function imageUrlFor(array $canonical, array $candidateRows): ?string
     {
-        $imageUrl = trim((string) ($canonical['image_url'] ?? ''));
-        if ($imageUrl !== '') {
-            return $imageUrl;
-        }
+        $urls = [$canonical['image_url'] ?? null];
 
         foreach ($candidateRows as $row) {
-            $imageUrl = trim((string) ($row['image_url'] ?? ''));
-            if ($imageUrl !== '') {
-                return $imageUrl;
-            }
+            $urls[] = $row['image_url'] ?? null;
         }
 
-        return null;
+        return SupermarketImageGuard::firstUsableUrl($urls);
     }
 
     private function categoryId(array $path): ?int

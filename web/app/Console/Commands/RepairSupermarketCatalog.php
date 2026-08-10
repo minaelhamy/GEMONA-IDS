@@ -9,17 +9,13 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\ProductVariation;
 use App\Models\SupermarketProductSource;
+use App\Support\SupermarketImageGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class RepairSupermarketCatalog extends Command
 {
-    private const REJECTED_IMAGE_HASHES = [
-        // HyperOne logo placeholder returned from some product-image URLs.
-        '0260f5b89cb272c22dc63bb7416e8088be9aae5cd1b0879a4f18ee0f5d9dca90',
-    ];
-
     private const CATEGORY_RULES = [
         'Beverages' => [
             'beverage', 'drink', 'water', 'juice', 'soda', 'cola', 'pepsi', 'coca', 'fanta', 'sprite',
@@ -253,13 +249,15 @@ class RepairSupermarketCatalog extends Command
             ->select(['id'])
             ->chunkById(500, function ($products) use (&$filled, $dryRun) {
                 foreach ($products as $product) {
-                    $imageUrl = SupermarketProductSource::query()
+                    $imageUrls = SupermarketProductSource::query()
                         ->where('product_id', $product->id)
                         ->whereNotNull('source_image_url')
                         ->where('source_image_url', '!=', '')
                         ->orderBy('source_available', 'desc')
                         ->orderBy('source_price')
-                        ->value('source_image_url');
+                        ->pluck('source_image_url')
+                        ->all();
+                    $imageUrl = SupermarketImageGuard::firstUsableUrl($imageUrls);
 
                     if (!$imageUrl) {
                         continue;
@@ -372,7 +370,7 @@ class RepairSupermarketCatalog extends Command
             ->each(function ($media) use (&$productIds) {
                 $path = storage_path('app/public/' . $media->id . '/' . $media->file_name);
 
-                if (is_file($path) && in_array(hash_file('sha256', $path), self::REJECTED_IMAGE_HASHES, true)) {
+                if (SupermarketImageGuard::isRejectedFile($path)) {
                     $productIds[] = (int) $media->model_id;
                 }
             });
@@ -412,7 +410,9 @@ class RepairSupermarketCatalog extends Command
 
         $basePrice = (float) $sources->min('source_price');
         $sellingPrice = round($basePrice * (1 + ($margin / 100)), 2);
-        $imageUrl = $sources->first(fn ($source) => !empty($source->source_image_url))?->source_image_url;
+        $imageUrl = SupermarketImageGuard::firstUsableUrl(
+            $sources->pluck('source_image_url')->filter()->all()
+        );
 
         $payload = [
             'supermarket_base_price' => $basePrice,

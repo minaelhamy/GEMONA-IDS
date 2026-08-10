@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\Status;
 use App\Models\Product;
 use App\Models\SupermarketProductSource;
+use App\Support\SupermarketImageGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -12,11 +14,6 @@ use Throwable;
 
 class CacheSupermarketImages extends Command
 {
-    private const REJECTED_IMAGE_HASHES = [
-        // HyperOne logo placeholder returned from some product-image URLs.
-        '0260f5b89cb272c22dc63bb7416e8088be9aae5cd1b0879a4f18ee0f5d9dca90',
-    ];
-
     protected $signature = 'supermarket:cache-images
         {--limit= : Maximum number of products to process in this run}
         {--force : Replace existing imported supermarket product images}
@@ -61,6 +58,7 @@ class CacheSupermarketImages extends Command
                 try {
                     $imageUrls = $this->imageUrlsFor($product);
                     if (!$imageUrls) {
+                        $product->update(['status' => Status::INACTIVE]);
                         $skipped++;
                         continue;
                     }
@@ -80,6 +78,7 @@ class CacheSupermarketImages extends Command
                     }
 
                     if (!$tempPath) {
+                        $product->update(['status' => Status::INACTIVE]);
                         $failed++;
                         continue;
                     }
@@ -90,8 +89,10 @@ class CacheSupermarketImages extends Command
                         ->withCustomProperties(['source_url' => $cachedUrl, 'source_type' => 'supermarket'])
                         ->toMediaCollection('product');
 
+                    $product->update(['status' => Status::ACTIVE]);
                     $cached++;
                 } catch (Throwable $exception) {
+                    $product->update(['status' => Status::INACTIVE]);
                     $failed++;
                     $this->warn(sprintf('Image failed for product #%s: %s', $product->id, $exception->getMessage()));
                 }
@@ -124,8 +125,8 @@ class CacheSupermarketImages extends Command
     private function imageUrlsFor(Product $product): array
     {
         $urls = [];
-        $primaryUrl = trim((string) $product->external_image_url);
-        if ($primaryUrl !== '') {
+        $primaryUrl = SupermarketImageGuard::cleanUrl($product->external_image_url);
+        if ($primaryUrl !== null) {
             $urls[] = $primaryUrl;
         }
 
@@ -137,8 +138,8 @@ class CacheSupermarketImages extends Command
             ->orderBy('source_price')
             ->pluck('source_image_url')
             ->each(function ($url) use (&$urls) {
-                $url = trim((string) $url);
-                if ($url !== '') {
+                $url = SupermarketImageGuard::cleanUrl($url);
+                if ($url !== null) {
                     $urls[] = $url;
                 }
             });
@@ -161,7 +162,7 @@ class CacheSupermarketImages extends Command
             return null;
         }
 
-        if (in_array(hash('sha256', $response->body()), self::REJECTED_IMAGE_HASHES, true)) {
+        if (SupermarketImageGuard::isRejectedBody($response->body())) {
             return null;
         }
 

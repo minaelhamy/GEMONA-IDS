@@ -39,7 +39,7 @@ class RefreshSupermarketCatalog extends Command
             return $importResult;
         }
 
-        $repairArguments = ['--keep-missing-images' => true];
+        $repairArguments = [];
         if ($this->option('margin') !== null) {
             $repairArguments['--margin'] = $this->option('margin');
         }
