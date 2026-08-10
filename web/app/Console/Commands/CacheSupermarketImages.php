@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Product;
+use App\Models\SupermarketProductSource;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -30,8 +31,6 @@ class CacheSupermarketImages extends Command
         $query = Product::query()
             ->select(['id', 'name', 'sku', 'external_image_url'])
             ->where('source_type', 'supermarket')
-            ->whereNotNull('external_image_url')
-            ->where('external_image_url', '!=', '')
             ->orderBy('id');
 
         if (!$force) {
@@ -55,8 +54,8 @@ class CacheSupermarketImages extends Command
                 $processed++;
 
                 try {
-                    $imageUrl = (string) $product->external_image_url;
-                    if ($imageUrl === '') {
+                    $imageUrls = $this->imageUrlsFor($product);
+                    if (!$imageUrls) {
                         $skipped++;
                         continue;
                     }
@@ -65,7 +64,16 @@ class CacheSupermarketImages extends Command
                         $product->clearMediaCollection('product');
                     }
 
-                    $tempPath = $this->downloadImage($imageUrl, $tempDir, (string) $product->sku);
+                    $tempPath = null;
+                    $cachedUrl = null;
+                    foreach ($imageUrls as $imageUrl) {
+                        $tempPath = $this->downloadImage($imageUrl, $tempDir, (string) $product->sku);
+                        if ($tempPath) {
+                            $cachedUrl = $imageUrl;
+                            break;
+                        }
+                    }
+
                     if (!$tempPath) {
                         $failed++;
                         continue;
@@ -74,7 +82,7 @@ class CacheSupermarketImages extends Command
                     $product
                         ->addMedia($tempPath)
                         ->usingFileName(basename($tempPath))
-                        ->withCustomProperties(['source_url' => $imageUrl, 'source_type' => 'supermarket'])
+                        ->withCustomProperties(['source_url' => $cachedUrl, 'source_type' => 'supermarket'])
                         ->toMediaCollection('product');
 
                     $cached++;
@@ -106,6 +114,31 @@ class CacheSupermarketImages extends Command
         ));
 
         return self::SUCCESS;
+    }
+
+    private function imageUrlsFor(Product $product): array
+    {
+        $urls = [];
+        $primaryUrl = trim((string) $product->external_image_url);
+        if ($primaryUrl !== '') {
+            $urls[] = $primaryUrl;
+        }
+
+        SupermarketProductSource::query()
+            ->where('product_id', $product->id)
+            ->whereNotNull('source_image_url')
+            ->where('source_image_url', '!=', '')
+            ->orderBy('source_available', 'desc')
+            ->orderBy('source_price')
+            ->pluck('source_image_url')
+            ->each(function ($url) use (&$urls) {
+                $url = trim((string) $url);
+                if ($url !== '') {
+                    $urls[] = $url;
+                }
+            });
+
+        return array_values(array_unique($urls));
     }
 
     private function downloadImage(string $url, string $tempDir, string $sku): ?string

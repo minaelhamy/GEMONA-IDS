@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'margin_percent' => (float) env('SUPERMARKET_MARGIN_PERCENT', 10),
+    'margin_percent' => (float) env('SUPERMARKET_MARGIN_PERCENT', 15),
     'sync_time'      => env('SUPERMARKET_SYNC_TIME', '03:00'),
     'products_path'  => env('SUPERMARKET_PRODUCTS_PATH', base_path('../data/latest/products.jsonl')),
     'clusters_path'  => env('SUPERMARKET_CLUSTERS_PATH', base_path('../data/latest/clusters.json')),

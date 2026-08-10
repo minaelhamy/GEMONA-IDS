@@ -152,7 +152,6 @@ class ImportSupermarketCatalog extends Command
 
                 $product->fill($payload);
                 $product->save();
-                $this->syncPackageVariation($product, $name, $sellingPrice);
                 $isNew ? $created++ : $updated++;
 
                 foreach ($candidateRows as $row) {

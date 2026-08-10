@@ -34,7 +34,17 @@ class RefreshSupermarketCatalog extends Command
             $arguments['--prices-only'] = true;
         }
 
-        return $this->call('supermarket:import', $arguments);
+        $importResult = $this->call('supermarket:import', $arguments);
+        if ($importResult !== self::SUCCESS) {
+            return $importResult;
+        }
+
+        $repairArguments = ['--keep-missing-images' => true];
+        if ($this->option('margin') !== null) {
+            $repairArguments['--margin'] = $this->option('margin');
+        }
+
+        return $this->call('gemona:repair-supermarket-catalog', $repairArguments);
     }
 
     private function runScraper(): int
