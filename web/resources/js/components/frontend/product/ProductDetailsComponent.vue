@@ -81,7 +81,7 @@
                                     :class="temp.stock === temp.quantity ? 'cursor-not-allowed' : ''"
                                     class="lab-fill-circle-plus text-lg leading-none transition-all duration-300 hover:text-primary"></button>
                             </div>
-                            <div v-if="!initialVariations.length || selectedVariation != null">
+                            <div v-if="!initialVariations.length || selectedVariation != null" class="stock-availability">
                                 <p v-if="temp.stock <= 0" class="capitalize text-danger">
                                     {{ $t('label.stock_out') }}
                                 </p>

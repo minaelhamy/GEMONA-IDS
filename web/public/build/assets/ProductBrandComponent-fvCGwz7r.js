@@ -1,1 +1,0 @@
-import{_ as e,r as n,o as r,k as t}from"./app-BukOvSDJ.js";const c={name:"ProductBrandComponent"};function s(a,p,_,d,m,u){const o=n("router-view");return r(),t(o)}const i=e(c,[["render",s]]);export{i as default};
