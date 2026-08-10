@@ -29,11 +29,6 @@
                         class="text-base font-medium capitalize py-3 border-b border-slate-100 text-heading">{{
                             page.title }}</router-link>
 
-                    <router-link v-on:click="hideTarget('mobile-sidebar-canvas', 'canvas-active')"
-                        class="text-base font-medium capitalize py-3 border-b border-slate-100 text-heading"
-                        :to="{ name: 'frontend.offers' }">
-                        {{ $t("label.offers") }}
-                    </router-link>
                 </nav>
 
                 <div v-if="setting.site_language_switch === enums.activityEnum.ENABLE">

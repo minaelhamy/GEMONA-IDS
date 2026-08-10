@@ -75,13 +75,6 @@
                             </div>
                         </li>
 
-                        <li class="header-nav-item">
-                            <router-link class="header-nav-menu"
-                                :class="checkIsPathAndRoutePathSame('/offers') ? 'router-link-active router-link-exact-active' : ''"
-                                :to="{ name: 'frontend.offers' }">
-                                {{ $t("label.offers") }}
-                            </router-link>
-                        </li>
                     </ul>
                 </nav>
                 <!-- MenuBar End -->
