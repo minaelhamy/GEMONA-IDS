@@ -12,6 +12,11 @@ use Throwable;
 
 class CacheSupermarketImages extends Command
 {
+    private const REJECTED_IMAGE_HASHES = [
+        // HyperOne logo placeholder returned from some product-image URLs.
+        '0260f5b89cb272c22dc63bb7416e8088be9aae5cd1b0879a4f18ee0f5d9dca90',
+    ];
+
     protected $signature = 'supermarket:cache-images
         {--limit= : Maximum number of products to process in this run}
         {--force : Replace existing imported supermarket product images}
@@ -153,6 +158,10 @@ class CacheSupermarketImages extends Command
             ->get($url);
 
         if (!$response->successful() || $response->body() === '') {
+            return null;
+        }
+
+        if (in_array(hash('sha256', $response->body()), self::REJECTED_IMAGE_HASHES, true)) {
             return null;
         }
 

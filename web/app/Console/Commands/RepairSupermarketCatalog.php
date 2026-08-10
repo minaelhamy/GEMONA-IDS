@@ -15,6 +15,11 @@ use Illuminate\Support\Str;
 
 class RepairSupermarketCatalog extends Command
 {
+    private const REJECTED_IMAGE_HASHES = [
+        // HyperOne logo placeholder returned from some product-image URLs.
+        '0260f5b89cb272c22dc63bb7416e8088be9aae5cd1b0879a4f18ee0f5d9dca90',
+    ];
+
     private const CATEGORY_RULES = [
         'Beverages' => [
             'beverage', 'drink', 'water', 'juice', 'soda', 'cola', 'pepsi', 'coca', 'fanta', 'sprite',
@@ -92,6 +97,7 @@ class RepairSupermarketCatalog extends Command
             'categories_remapped' => $this->remapCategories($dryRun),
             'external_images_filled' => $this->fillExternalImageUrls($dryRun),
             'missing_local_images_hidden' => $this->option('keep-missing-images') ? 0 : $this->hideProductsMissingLocalImages($dryRun),
+            'placeholder_images_hidden' => $this->hideProductsWithRejectedImages($dryRun),
         ];
 
         foreach ($summary as $label => $count) {
@@ -346,6 +352,45 @@ class RepairSupermarketCatalog extends Command
                 ->where('source_type', 'supermarket')
                 ->whereHas('media', fn ($query) => $query->where('collection_name', 'product'))
                 ->update(['status' => Status::ACTIVE]);
+        }
+
+        return $count;
+    }
+
+    private function hideProductsWithRejectedImages(bool $dryRun): int
+    {
+        $productIds = [];
+
+        DB::table('media')
+            ->join('products', 'products.id', '=', 'media.model_id')
+            ->where('media.model_type', Product::class)
+            ->where('media.collection_name', 'product')
+            ->where('products.source_type', 'supermarket')
+            ->select(['media.id', 'media.file_name', 'media.model_id'])
+            ->orderBy('media.id')
+            ->cursor()
+            ->each(function ($media) use (&$productIds) {
+                $path = storage_path('app/public/' . $media->id . '/' . $media->file_name);
+
+                if (is_file($path) && in_array(hash_file('sha256', $path), self::REJECTED_IMAGE_HASHES, true)) {
+                    $productIds[] = (int) $media->model_id;
+                }
+            });
+
+        $productIds = array_values(array_unique($productIds));
+        if (!$productIds) {
+            return 0;
+        }
+
+        $count = Product::query()
+            ->whereIn('id', $productIds)
+            ->where('status', Status::ACTIVE)
+            ->count();
+
+        if (!$dryRun) {
+            Product::query()
+                ->whereIn('id', $productIds)
+                ->update(['status' => Status::INACTIVE]);
         }
 
         return $count;
