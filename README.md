@@ -40,6 +40,7 @@ Outputs are written under `data/runs/<timestamp>/` and copied to `data/latest/`.
 - `mahmoud_elfar`: implemented through the web API. It selects Maadi/Cairo for the location gate, discovers categories, then crawls category pages.
 - `hyperone`: implemented through Magento GraphQL. It selects a Maadi/Sheikh Zayed-backed store source, discovers categories, and crawls products.
 - `carrefour`: implemented through browser-grade TLS category HTML fetching. It discovers non-cold categories from Carrefour's all-categories page, walks `currentPage`, and parses embedded Next.js product-card data. The MAF `v8` API path remains as a fallback, and rendered HTML snapshots can also be imported manually.
+- `amazon_eg`: implemented through Amazon Creators API SearchItems with the `FulfilledByAmazon` delivery filter. It is disabled by default until Amazon API credentials are configured.
 
 Current verified import:
 
@@ -53,6 +54,22 @@ Carrefour fallback command for rendered HTML snapshots:
 
 ```bash
 python3 -m scraper.cli import-carrefour-html saved-carrefour-category.html --category-path "Food Cupboard>Breakfast Cereals & Bars"
+```
+
+Amazon Egypt uses the configured 15% import margin like the other sources. To enable it, set these environment variables in the Laravel `.env` file:
+
+```bash
+AMAZON_EG_ENABLED=true
+AMAZON_EG_PARTNER_TAG=your-tag
+AMAZON_CREATORS_CLIENT_ID=your-client-id
+AMAZON_CREATORS_CLIENT_SECRET=your-client-secret
+AMAZON_CREATORS_CREDENTIAL_VERSION=3.2
+```
+
+You can also control the refresh list explicitly:
+
+```bash
+SUPERMARKET_SOURCES=seoudi,mahmoud_elfar,hyperone,carrefour,amazon_eg
 ```
 
 ## Duplicate Strategy
