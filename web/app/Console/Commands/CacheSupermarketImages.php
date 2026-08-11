@@ -17,6 +17,8 @@ class CacheSupermarketImages extends Command
     protected $signature = 'supermarket:cache-images
         {--limit= : Maximum number of products to process in this run}
         {--source= : Only cache products that have candidates from this source, for example amazon_eg}
+        {--include-inactive : Also cache images for inactive supermarket products}
+        {--include-amazon : Also cache images for products that have amazon_eg as a source}
         {--force : Replace existing imported supermarket product images}
         {--progress-every=100 : Print progress after this many products}';
 
@@ -26,6 +28,8 @@ class CacheSupermarketImages extends Command
     {
         $limit = $this->option('limit') !== null ? max(0, (int) $this->option('limit')) : null;
         $source = trim((string) $this->option('source'));
+        $includeInactive = (bool) $this->option('include-inactive');
+        $includeAmazon = (bool) $this->option('include-amazon');
         $force = (bool) $this->option('force');
         $progressEvery = max(1, (int) $this->option('progress-every'));
         $tempDir = storage_path('app/supermarket-image-imports');
@@ -37,8 +41,16 @@ class CacheSupermarketImages extends Command
             ->where('source_type', 'supermarket')
             ->orderBy('id');
 
+        if (!$includeInactive) {
+            $query->where('status', Status::ACTIVE);
+        }
+
         if ($source !== '') {
             $query->whereHas('supermarketSources', fn ($sourceQuery) => $sourceQuery->where('source', $source));
+        }
+
+        if (!$includeAmazon && $source !== 'amazon_eg') {
+            $query->whereDoesntHave('supermarketSources', fn ($sourceQuery) => $sourceQuery->where('source', 'amazon_eg'));
         }
 
         if (!$force) {
@@ -69,10 +81,6 @@ class CacheSupermarketImages extends Command
                         continue;
                     }
 
-                    if ($force) {
-                        $product->clearMediaCollection('product');
-                    }
-
                     $tempPath = null;
                     $cachedUrl = null;
                     foreach ($imageUrls as $imageUrl) {
@@ -87,6 +95,10 @@ class CacheSupermarketImages extends Command
                         $product->update(['status' => Status::INACTIVE]);
                         $failed++;
                         continue;
+                    }
+
+                    if ($force) {
+                        $product->clearMediaCollection('product');
                     }
 
                     $product
