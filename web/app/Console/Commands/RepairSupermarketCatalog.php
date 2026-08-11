@@ -12,6 +12,7 @@ use App\Models\SupermarketProductSource;
 use App\Support\SupermarketImageGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class RepairSupermarketCatalog extends Command
@@ -94,6 +95,7 @@ class RepairSupermarketCatalog extends Command
             'external_images_filled' => $this->fillExternalImageUrls($dryRun),
             'missing_local_images_hidden' => $this->option('keep-missing-images') ? 0 : $this->hideProductsMissingLocalImages($dryRun),
             'placeholder_images_hidden' => $this->hideProductsWithRejectedImages($dryRun),
+            'amazon_products_quarantined' => $this->quarantineAmazonProducts($dryRun),
         ];
 
         foreach ($summary as $label => $count) {
@@ -389,6 +391,49 @@ class RepairSupermarketCatalog extends Command
             Product::query()
                 ->whereIn('id', $productIds)
                 ->update(['status' => Status::INACTIVE]);
+        }
+
+        return $count;
+    }
+
+    private function quarantineAmazonProducts(bool $dryRun): int
+    {
+        $amazonProductIds = SupermarketProductSource::query()
+            ->where('source', 'amazon_eg')
+            ->whereNotNull('product_id')
+            ->distinct()
+            ->pluck('product_id')
+            ->all();
+
+        if (!$amazonProductIds) {
+            return 0;
+        }
+
+        $query = Product::query()
+            ->whereIn('id', $amazonProductIds)
+            ->where(function ($query) {
+                $query
+                    ->where('status', '!=', Status::INACTIVE)
+                    ->orWhereNotNull('description');
+            });
+
+        $count = (clone $query)->count();
+
+        if (!$dryRun) {
+            $query->update([
+                'status' => Status::INACTIVE,
+                'description' => null,
+                'updated_at' => now(),
+            ]);
+
+            if (Schema::hasTable('product_seos')) {
+                DB::table('product_seos')
+                    ->whereIn('product_id', $amazonProductIds)
+                    ->update([
+                        'description' => null,
+                        'updated_at' => now(),
+                    ]);
+            }
         }
 
         return $count;

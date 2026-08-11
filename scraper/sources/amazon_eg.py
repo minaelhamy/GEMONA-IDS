@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import sys
 from collections.abc import Iterable
 from typing import Any
@@ -248,7 +247,7 @@ class AmazonEgSource(Source):
             currency="EGP",
             image_url=image_url,
             description=None,
-            detail=self._detail_from_card_text(card_text, title),
+            detail=None,
             product_url=product_url,
             category_path=["Amazon.eg", category["name"]],
             raw={
@@ -257,11 +256,6 @@ class AmazonEgSource(Source):
                 "fulfilled_by_amazon_filter": FBA_REFINEMENT,
             },
         )
-
-    def _detail_from_card_text(self, card_text: str, title: str) -> str | None:
-        detail = clean_text(card_text.replace(title, " ", 1))
-        detail = re.sub(r"\bAdd to cart\b.*$", "", detail, flags=re.I)
-        return detail[:1000] or None
 
     def _next_url(self, html: str) -> str | None:
         soup = BeautifulSoup(html, "lxml")

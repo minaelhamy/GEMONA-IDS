@@ -500,6 +500,10 @@ class ImportSupermarketCatalog extends Command
 
     private function descriptionFor(array $row): ?string
     {
+        if (($row['source'] ?? null) === 'amazon_eg') {
+            return null;
+        }
+
         $parts = array_filter([
             Arr::get($row, 'description'),
             Arr::get($row, 'detail'),
