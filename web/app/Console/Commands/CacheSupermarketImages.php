@@ -15,6 +15,7 @@ use Throwable;
 class CacheSupermarketImages extends Command
 {
     protected $signature = 'supermarket:cache-images
+        {--product-id= : Only cache a single product ID}
         {--limit= : Maximum number of products to process in this run}
         {--source= : Only cache products that have candidates from this source, for example amazon_eg}
         {--include-inactive : Also cache images for inactive supermarket products}
@@ -26,6 +27,7 @@ class CacheSupermarketImages extends Command
 
     public function handle(): int
     {
+        $productId = $this->option('product-id') !== null ? max(0, (int) $this->option('product-id')) : null;
         $limit = $this->option('limit') !== null ? max(0, (int) $this->option('limit')) : null;
         $source = trim((string) $this->option('source'));
         $includeInactive = (bool) $this->option('include-inactive');
@@ -40,6 +42,10 @@ class CacheSupermarketImages extends Command
             ->select(['id', 'name', 'sku', 'external_image_url'])
             ->where('source_type', 'supermarket')
             ->orderBy('id');
+
+        if ($productId !== null && $productId > 0) {
+            $query->whereKey($productId);
+        }
 
         if (!$includeInactive) {
             $query->where('status', Status::ACTIVE);
