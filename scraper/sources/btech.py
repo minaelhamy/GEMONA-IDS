@@ -117,12 +117,10 @@ class BtechSource(Source):
         if not variant_id or not name or not thumbnail or price is None or not item.get("is_in_stock", False):
             return None
 
-        detail_slug = clean_text(item.get("slug")) or variant_id
-        try:
-            detail = self._product_detail(detail_slug, cache_key=clean_text(item.get("product_id")) or detail_slug)
-        except RuntimeError as exc:
-            print(f"btech: detail unavailable for {variant_id}; using exact listing row: {exc}", file=sys.stderr, flush=True)
-            detail = {}
+        # The listing response already contains the exact variant identity, image,
+        # price, category and option data. B.TECH's detail endpoint is unreliable
+        # and must not be allowed to replace those fields during a bulk import.
+        detail: dict[str, Any] = {}
         variant = (detail.get("variants") or {}).get(variant_id) or {}
         variant_name = clean_text(variant.get("name")) or name
         main_image = clean_text(variant.get("main_image")) or thumbnail
