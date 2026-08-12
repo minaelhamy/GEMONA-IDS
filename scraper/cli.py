@@ -4,6 +4,8 @@ import argparse
 import hashlib
 import json
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from collections import defaultdict
@@ -118,23 +120,38 @@ def stage_catalog(args: argparse.Namespace) -> None:
 
     for source_name in args.sources:
         source = SOURCES[source_name]()
-        image_client = HttpClient(delay_seconds=0.05)
         seen: set[str] = set()
+        candidates = []
         source_count = 0
         for product in source.crawl(limit=args.limit_per_source, limit_categories=args.limit_categories_per_source):
             if product.private_key in seen or product.price is None or float(product.price) <= 0:
                 continue
             seen.add(product.private_key)
-            try:
-                product.category_path = canonical_category_path(product)
-                staged_product = stage_product_image(product, image_dir, image_client)
-            except (ImageValidationError, OSError, RuntimeError) as exc:
-                rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
-                continue
-            staged.append(staged_product)
-            source_count += 1
-            if source_count % args.progress_every == 0:
-                print(f"{source_name}: {source_count} products with validated local images...", flush=True)
+            product.category_path = canonical_category_path(product)
+            candidates.append(product)
+            if len(candidates) % 500 == 0:
+                print(f"{source_name}: discovered {len(candidates)} source products...", flush=True)
+
+        thread_state = threading.local()
+
+        def stage_one(product):
+            if not hasattr(thread_state, "client"):
+                thread_state.client = HttpClient(delay_seconds=0.05)
+            return stage_product_image(product, image_dir, thread_state.client)
+
+        with ThreadPoolExecutor(max_workers=args.image_workers) as executor:
+            futures = {executor.submit(stage_one, product): product for product in candidates}
+            for future in as_completed(futures):
+                product = futures[future]
+                try:
+                    staged_product = future.result()
+                except (ImageValidationError, OSError, RuntimeError) as exc:
+                    rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
+                    continue
+                staged.append(staged_product)
+                source_count += 1
+                if source_count % args.progress_every == 0:
+                    print(f"{source_name}: {source_count} products with validated local images...", flush=True)
         print(f"{source_name}: staged {source_count}; rejected {sum(1 for r in rejected if r['private_key'].startswith(source_name + ':'))}")
 
     hash_groups: dict[str, list] = defaultdict(list)
@@ -245,6 +262,7 @@ def build_parser() -> argparse.ArgumentParser:
     stage_parser.add_argument("--limit-per-source", type=int)
     stage_parser.add_argument("--limit-categories-per-source", type=int)
     stage_parser.add_argument("--progress-every", type=int, default=100)
+    stage_parser.add_argument("--image-workers", type=int, default=8)
     stage_parser.set_defaults(func=stage_catalog)
 
     html_parser = sub.add_parser("import-carrefour-html", help="Import rendered Carrefour category HTML snapshots")
