@@ -61,20 +61,20 @@ def canonical_category_path(product: Product) -> list[str]:
         ("Mobiles & Tablets", r"mobile|smartphone|smart phone|tablet|smart watch|wearable|phone case|screen protector"),
         ("Computers & Office", r"laptop|computer|desktop|monitor|printer|scanner|router|keyboard|mouse|notebook|stationery|office|toner|ink cartridge|hard drive|ssd|motherboard|processor|graphics card|ram\b|usb hub"),
         ("TVs & Audio", r"\btv\b|television|projector|receiver|speaker|headphone|earbud|audio|sound ?bar|microphone|home theater"),
-        ("Large Appliances", r"air conditioner|refrigerator|freezer|washing machine|dishwasher|cooker|built.?in oven|water heater|water dispenser|air cooler"),
-        ("Kitchen Appliances", r"kettle|blender|mixer|microwave|air fryer|coffee maker|toaster|food processor|chopper|juicer|sandwich maker|vacuum|iron\b|fan\b|heater\b"),
-        ("Gaming & Electronics", r"gaming|console|playstation|xbox|camera|electronics|power bank|charger|cable|adapter|remote control|smart home"),
+        ("Large Appliances", r"air conditioner|refrigerator|freezer|washing machine|washer dryer|dishwasher|cooker|built.?in oven|water heater|water dispenser|air cooler"),
+        ("Kitchen Appliances", r"kettle|blender|mixer|microwave|air fryer|coffee (maker|machine)|espresso machine|toaster|food processor|chopper|juicer|sandwich maker|vacuum|iron\b|fan\b|heater\b"),
+        ("Gaming & Electronics", r"gaming|console|playstation|xbox|camera|electronics|power bank|charger|cable|adapter|remote control|smart home|led (bulb|lamp)|light bulb|batter(?:y|ies)|electric plug|plug adaptor"),
     ]
     if product.source != "btech":
         rules.extend([
-            ("Baby & Family", r"baby|diaper|feminine|sanitary|family|feeding bottle|pacifier"),
-            ("Personal Care", r"shampoo|conditioner|soap|deodorant|tooth|skin|beauty|personal care|lotion|cream|serum|sunscreen|razor|shav|hair|perfume|loofah|body wash|mouthwash"),
-            ("Household & Cleaning", r"clean|detergent|laundry|tissue|toilet paper|household|dishwash|bleach|disinfect|sponge|scourer|garbage bag|insect killer|air freshener|fabric softener"),
+            ("Baby & Family", r"baby|diaper|feminine|sanitary|family|feeding bottle|pacifier|toy|doll|playd(?:ough|oh)|board game|card game|coloring book|swimming goggles"),
+            ("Personal Care", r"shampoo|conditioner|soap|shower gel|deodorant|tooth|skin|beauty|personal care|lotion|cream|serum|sunscreen|razor|shav|hair|perfume|fragrance|body (mist|splash)|eau de cologne|loofah|body wash|mouthwash|nail polish|cotton (pad|bud)|wet wipe|shoe polish|face mask|dye number"),
+            ("Household & Cleaning", r"clean|detergent|laundry|tissue|toilet paper|household|dishwash|bleach|disinfect|sponge|scourer|garbage|trash bin|dustpan|floor mop|glass wiper|clothes drying|insect killer|air freshener|fabric softener|brush set"),
             ("Beverages", r"water|juice|drink|beverage|coffee|tea|soda|cola|nectar|espresso|cappuccino|cocoa|milkshake|syrup"),
-            ("Snacks & Confectionery", r"snack|chocolate|candy|biscuit|cookie|chips|sweet|confection|cracker|wafer|popcorn|gum\b|nuts|protein bar"),
+            ("Snacks & Confectionery", r"snack|chocolate|candy|biscuit|cookie|chips|sweet|confection|cracker|wafer|popcorn|gum\b|nuts|protein (bar|puff)|brownie|dragee|semsemya|pumpkin seeds"),
             ("Breakfast & Bakery", r"breakfast|cereal|oat|bakery|bread|toast|jam|honey|croissant|danish|cake|muffin|donut|pastr|rusk|feteer|simit"),
-            ("Pantry & Cooking", r"rice|pasta|oil|sauce|spice|flour|sugar|salt|canned|pantry|cooking|tomato paste|bean|fava|lentil|chickpea|tuna|hummus|soup|pickle|olive|vinegar|bouillon|ghee|halawa|tahini|seasoning|noodle|vermicelli|food|salad|sandwich|pizza"),
-            ("Home & Kitchen", r"cookware|tableware|kitchen|home|plate|bowl|cup|mug|fork|spoon|knife|cutlery|container|cling film|fridge bag|table sheet|bottle|towel|mat\b|storage|decor|tool"),
+            ("Pantry & Cooking", r"rice|pasta|oil|sauce|spice|flour|sugar|salt|canned|pantry|cooking|tomato paste|bean|fava|lentil|chickpea|tuna|hummus|soup|pickle|olive|vinegar|bouillon|ghee|butter|halawa|tahini|seasoning|masala|dokka|noodle|vermicelli|food|salad|sandwich|pizza|turkey|beetroot"),
+            ("Home & Kitchen", r"cookware|tableware|kitchen|home|frying pan|fry pan|grill\b|brioche mold|plate|bowl|cup|mug|fork|spoon|knife|cutlery|container|cling film|fridge bag|table sheet|bottle|towel|mat\b|storage|decor|tool|folding table|blanket|spatula"),
         ])
     else:
         rules.extend([

@@ -60,6 +60,14 @@ class CatalogTests(unittest.TestCase):
         product = self.product("hyperone", "5", "Plastic White Plates - 25 Pieces", 50)
         self.assertEqual(["Home & Kitchen"], canonical_category_path(product))
 
+    def test_btech_coffee_machine_gets_appliance_category(self) -> None:
+        product = self.product("btech", "6", "Delonghi Espresso Machine - EC890", 12000)
+        self.assertEqual(["Kitchen Appliances"], canonical_category_path(product))
+
+    def test_supermarket_toy_gets_family_category(self) -> None:
+        product = self.product("hyperone", "7", "Nilco Draw And Roll Board Game", 250)
+        self.assertEqual(["Baby & Family"], canonical_category_path(product))
+
     def test_checkpoint_deduplication_keeps_one_source_row(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "checkpoint.jsonl"
