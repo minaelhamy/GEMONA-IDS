@@ -57,6 +57,7 @@ class ReplaceCatalogFromStage extends Command
             '--clusters' => $clustersPath,
             '--margin' => (float) $this->option('margin'),
             '--require-local-images' => true,
+            '--skip-media-conversions' => true,
         ]);
         if ($result !== self::SUCCESS) {
             $this->error('New catalog import failed. Existing products remain available.');

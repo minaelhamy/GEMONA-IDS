@@ -22,6 +22,8 @@ class Product extends Model implements HasMedia
 
     public const SUPERMARKET_ORDERABLE_QUANTITY = 999999;
 
+    public static bool $skipMediaConversions = false;
+
     protected $table = "products";
     protected $fillable = [
         'name',
@@ -172,7 +174,7 @@ class Product extends Model implements HasMedia
     {
         if (!empty($this->getFirstMediaUrl('product'))) {
             $product = $this->getMedia('product')->first();
-            return $product->getUrl('thumb');
+            return $this->mediaConversionOrOriginal($product, 'thumb');
         }
         if (!empty($this->external_image_url)) {
             return $this->proxiedExternalImageUrl();
@@ -184,7 +186,7 @@ class Product extends Model implements HasMedia
     {
         if (!empty($this->getFirstMediaUrl('product'))) {
             $product = $this->getMedia('product')->first();
-            return $product->getUrl('cover');
+            return $this->mediaConversionOrOriginal($product, 'cover');
         }
         if (!empty($this->external_image_url)) {
             return $this->proxiedExternalImageUrl();
@@ -196,7 +198,7 @@ class Product extends Model implements HasMedia
     {
         if (!empty($this->getFirstMediaUrl('product'))) {
             $product = $this->getMedia('product')->first();
-            return $product->getUrl('preview');
+            return $this->mediaConversionOrOriginal($product, 'preview');
         }
         if (!empty($this->external_image_url)) {
             return $this->proxiedExternalImageUrl();
@@ -210,7 +212,7 @@ class Product extends Model implements HasMedia
         if (!empty($this->getFirstMediaUrl('product'))) {
             $images = $this->getMedia('product');
             foreach ($images as $image) {
-                $response[] = $image->getUrl('preview');
+                $response[] = $this->mediaConversionOrOriginal($image, 'preview');
             }
         } elseif (!empty($this->external_image_url)) {
             $response[] = $this->proxiedExternalImageUrl();
@@ -238,6 +240,10 @@ class Product extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
+        if (self::$skipMediaConversions) {
+            return;
+        }
+
         $this->addMediaConversion('thumb')->width(168)->height(180)->keepOriginalImageFormat()->sharpen(10)->nonQueued();
         $this->addMediaConversion('cover')->width(372)->height(405)->keepOriginalImageFormat()->sharpen(10)->nonQueued();
         $this->addMediaConversion('preview')->width(1536)->height(1536)->keepOriginalImageFormat()->sharpen(10)->nonQueued();
@@ -325,10 +331,23 @@ class Product extends Model implements HasMedia
         }
 
         try {
-            return file_exists($media->getPath()) && file_exists($media->getPath('cover'));
+            return file_exists($media->getPath());
         } catch (\Throwable $exception) {
             return false;
         }
+    }
+
+    private function mediaConversionOrOriginal(Media $media, string $conversion): string
+    {
+        try {
+            if (file_exists($media->getPath($conversion))) {
+                return $media->getUrl($conversion);
+            }
+        } catch (\Throwable $exception) {
+            // The verified original remains a valid storefront image.
+        }
+
+        return $media->getUrl();
     }
 
     public function wishlist()

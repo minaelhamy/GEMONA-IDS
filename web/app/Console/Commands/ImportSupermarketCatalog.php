@@ -30,6 +30,7 @@ class ImportSupermarketCatalog extends Command
         {--clusters= : Path to clusters.json}
         {--margin= : Margin percentage to add to source prices}
         {--require-local-images : Reject rows without a staged image whose SHA-256 matches the catalog}
+        {--skip-media-conversions : Attach verified originals without generating synchronous conversions}
         {--prices-only : For existing supermarket products, update only price, availability, source candidates, and sync metadata}
         {--dry-run : Read and validate the data without writing}';
 
@@ -75,6 +76,7 @@ class ImportSupermarketCatalog extends Command
         $updated = 0;
         $sources = 0;
         $skipped = 0;
+        Product::$skipMediaConversions = (bool) $this->option('skip-media-conversions');
 
         foreach ($clusters as $index => $cluster) {
             $candidateRows = $this->candidateRows($cluster, $sourceProducts);
