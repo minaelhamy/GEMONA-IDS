@@ -13,6 +13,7 @@ class ReplaceCatalogFromStage extends Command
     protected $signature = 'catalog:replace-staged
         {stage : Absolute path to the validated stage directory}
         {--confirm= : Must be REPLACE-GEMONA-CATALOG}
+        {--reuse-imported : Verify and finalize a previously completed staged import}
         {--margin=15 : Selling-price margin percentage}';
 
     protected $description = 'Import a fully staged image-backed catalog, verify it, then archive the previous catalog.';
@@ -51,17 +52,21 @@ class ReplaceCatalogFromStage extends Command
         }
 
         $oldProducts = Product::query()->get(['id', 'external_key']);
-        $this->info('Importing and locally attaching the staged catalog before retiring existing products.');
-        $result = $this->call('supermarket:import', [
-            '--products' => $productsPath,
-            '--clusters' => $clustersPath,
-            '--margin' => (float) $this->option('margin'),
-            '--require-local-images' => true,
-            '--skip-media-conversions' => true,
-        ]);
-        if ($result !== self::SUCCESS) {
-            $this->error('New catalog import failed. Existing products remain available.');
-            return $result;
+        if (!$this->option('reuse-imported')) {
+            $this->info('Importing and locally attaching the staged catalog before retiring existing products.');
+            $result = $this->call('supermarket:import', [
+                '--products' => $productsPath,
+                '--clusters' => $clustersPath,
+                '--margin' => (float) $this->option('margin'),
+                '--require-local-images' => true,
+                '--skip-media-conversions' => true,
+            ]);
+            if ($result !== self::SUCCESS) {
+                $this->error('New catalog import failed. Existing products remain available.');
+                return $result;
+            }
+        } else {
+            $this->info('Reusing the completed staged import; all safety gates will run before retirement.');
         }
 
         $verified = 0;
@@ -81,7 +86,10 @@ class ReplaceCatalogFromStage extends Command
         foreach ($expectedKeys->chunk(500) as $keys) {
             $priceErrors += Product::query()
                 ->whereIn('external_key', $keys)
-                ->whereRaw('ABS(selling_price - ROUND(supermarket_base_price * ?, 2)) > 0.009', [$marginMultiplier])
+                ->whereRaw(
+                    'ABS(selling_price - ROUND(supermarket_base_price * CAST(? AS DECIMAL(10,4)), 2)) > 0.009',
+                    [number_format($marginMultiplier, 4, '.', '')]
+                )
                 ->count();
         }
         if ($priceErrors > 0) {
