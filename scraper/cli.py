@@ -200,6 +200,9 @@ def _stage_catalog_locked(args: argparse.Namespace, run_dir: Path, image_dir: Pa
         staging_complete.touch()
         print(f"{source_name}: staged {source_count}; rejected {sum(1 for r in rejected if r['private_key'].startswith(source_name + ':'))}")
 
+    for product in staged:
+        product.category_path = canonical_category_path(product)
+
     hash_groups: dict[str, list] = defaultdict(list)
     for product in staged:
         hash_groups[product.image_sha256 or ""].append(product)

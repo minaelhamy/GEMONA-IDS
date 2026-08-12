@@ -51,6 +51,15 @@ class CatalogTests(unittest.TestCase):
         )
         self.assertEqual("Large Appliances", canonical_category_path(product)[0])
 
+    def test_grocery_description_recovers_bad_supplier_category(self) -> None:
+        product = self.product("seoudi", "4", "Seoudi Tomato Paste - 360 g", 32.5, "Lamb Chops")
+        product.detail = "Tomato sauce for pasta and stews"
+        self.assertEqual(["Pantry & Cooking"], canonical_category_path(product))
+
+    def test_household_disposable_gets_home_category(self) -> None:
+        product = self.product("hyperone", "5", "Plastic White Plates - 25 Pieces", 50)
+        self.assertEqual(["Home & Kitchen"], canonical_category_path(product))
+
     def test_checkpoint_deduplication_keeps_one_source_row(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "checkpoint.jsonl"

@@ -51,25 +51,30 @@ def strict_clusters(products: list[Product]) -> list[StrictCluster]:
 
 
 def canonical_category_path(product: Product) -> list[str]:
-    text = " ".join([product.name, *product.category_path]).lower()
+    text = " ".join([
+        product.name,
+        product.description or "",
+        product.detail or "",
+        *product.category_path,
+    ]).lower()
     rules = [
-        ("Mobiles & Tablets", r"mobile|smartphone|tablet|smart watch|wearable"),
-        ("Computers & Office", r"laptop|computer|desktop|monitor|printer|scanner|router|keyboard|mouse"),
-        ("TVs & Audio", r"\btv\b|television|projector|speaker|headphone|earbud|audio|soundbar"),
-        ("Large Appliances", r"air conditioner|refrigerator|freezer|washing machine|dishwasher|cooker|oven"),
-        ("Kitchen Appliances", r"kettle|blender|mixer|microwave|air fryer|coffee maker|toaster|food processor"),
-        ("Gaming & Electronics", r"gaming|console|playstation|xbox|camera|electronics|accessor"),
+        ("Mobiles & Tablets", r"mobile|smartphone|smart phone|tablet|smart watch|wearable|phone case|screen protector"),
+        ("Computers & Office", r"laptop|computer|desktop|monitor|printer|scanner|router|keyboard|mouse|notebook|stationery|office|toner|ink cartridge|hard drive|ssd|motherboard|processor|graphics card|ram\b|usb hub"),
+        ("TVs & Audio", r"\btv\b|television|projector|receiver|speaker|headphone|earbud|audio|sound ?bar|microphone|home theater"),
+        ("Large Appliances", r"air conditioner|refrigerator|freezer|washing machine|dishwasher|cooker|built.?in oven|water heater|water dispenser|air cooler"),
+        ("Kitchen Appliances", r"kettle|blender|mixer|microwave|air fryer|coffee maker|toaster|food processor|chopper|juicer|sandwich maker|vacuum|iron\b|fan\b|heater\b"),
+        ("Gaming & Electronics", r"gaming|console|playstation|xbox|camera|electronics|power bank|charger|cable|adapter|remote control|smart home"),
     ]
     if product.source != "btech":
         rules.extend([
-            ("Beverages", r"water|juice|drink|beverage|coffee|tea|soda|cola"),
-            ("Pantry & Cooking", r"rice|pasta|oil|sauce|spice|flour|sugar|salt|canned|pantry|cooking"),
-            ("Snacks & Confectionery", r"snack|chocolate|candy|biscuit|chips|sweet|confection"),
-            ("Breakfast & Bakery", r"breakfast|cereal|oat|bakery|bread|jam|honey"),
-            ("Household & Cleaning", r"clean|detergent|laundry|tissue|paper|household|dishwash"),
-            ("Personal Care", r"shampoo|soap|deodorant|tooth|skin|beauty|personal care"),
-            ("Baby & Family", r"baby|diaper|feminine|family"),
-            ("Home & Kitchen", r"cookware|tableware|kitchen|home"),
+            ("Baby & Family", r"baby|diaper|feminine|sanitary|family|feeding bottle|pacifier"),
+            ("Personal Care", r"shampoo|conditioner|soap|deodorant|tooth|skin|beauty|personal care|lotion|cream|serum|sunscreen|razor|shav|hair|perfume|loofah|body wash|mouthwash"),
+            ("Household & Cleaning", r"clean|detergent|laundry|tissue|toilet paper|household|dishwash|bleach|disinfect|sponge|scourer|garbage bag|insect killer|air freshener|fabric softener"),
+            ("Beverages", r"water|juice|drink|beverage|coffee|tea|soda|cola|nectar|espresso|cappuccino|cocoa|milkshake|syrup"),
+            ("Snacks & Confectionery", r"snack|chocolate|candy|biscuit|cookie|chips|sweet|confection|cracker|wafer|popcorn|gum\b|nuts|protein bar"),
+            ("Breakfast & Bakery", r"breakfast|cereal|oat|bakery|bread|toast|jam|honey|croissant|danish|cake|muffin|donut|pastr|rusk|feteer|simit"),
+            ("Pantry & Cooking", r"rice|pasta|oil|sauce|spice|flour|sugar|salt|canned|pantry|cooking|tomato paste|bean|fava|lentil|chickpea|tuna|hummus|soup|pickle|olive|vinegar|bouillon|ghee|halawa|tahini|seasoning|noodle|vermicelli|food|salad|sandwich|pizza"),
+            ("Home & Kitchen", r"cookware|tableware|kitchen|home|plate|bowl|cup|mug|fork|spoon|knife|cutlery|container|cling film|fridge bag|table sheet|bottle|towel|mat\b|storage|decor|tool"),
         ])
     else:
         rules.extend([
@@ -78,8 +83,7 @@ def canonical_category_path(product: Product) -> list[str]:
         ])
     for category, pattern in rules:
         if re.search(pattern, text):
-            leaf = clean_text(product.category_path[-1]) if product.category_path else category
-            return [category] if not leaf or leaf.lower() == category.lower() else [category, leaf]
+            return [category]
     return ["Other"]
 
 
