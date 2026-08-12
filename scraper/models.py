@@ -18,6 +18,10 @@ class Product:
     detail: str | None = None
     product_url: str | None = None
     category_path: list[str] = field(default_factory=list)
+    local_image_path: str | None = None
+    image_sha256: str | None = None
+    image_width: int | None = None
+    image_height: int | None = None
     scraped_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     raw: dict[str, Any] = field(default_factory=dict)
 

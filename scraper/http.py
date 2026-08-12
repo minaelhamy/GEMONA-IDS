@@ -15,6 +15,7 @@ class FetchResult:
     status_code: int
     text: str
     headers: dict[str, str]
+    content: bytes
 
 
 class HttpClient:
@@ -37,6 +38,7 @@ class HttpClient:
             status_code=response.status_code,
             text=response.text,
             headers=dict(response.headers),
+            content=response.content,
         )
 
     def post_json(self, url: str, payload: dict[str, Any], **kwargs: Any) -> FetchResult:
@@ -58,4 +60,5 @@ class HttpClient:
             status_code=response.status_code,
             text=response.text,
             headers=dict(response.headers),
+            content=response.content,
         )

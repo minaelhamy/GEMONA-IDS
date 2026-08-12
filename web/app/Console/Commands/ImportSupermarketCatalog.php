@@ -29,6 +29,7 @@ class ImportSupermarketCatalog extends Command
         {--products= : Path to products.jsonl}
         {--clusters= : Path to clusters.json}
         {--margin= : Margin percentage to add to source prices}
+        {--require-local-images : Reject rows without a staged image whose SHA-256 matches the catalog}
         {--prices-only : For existing supermarket products, update only price, availability, source candidates, and sync metadata}
         {--dry-run : Read and validate the data without writing}';
 
@@ -94,7 +95,7 @@ class ImportSupermarketCatalog extends Command
                 &$sources
             ) {
                 $externalKey = 'supermarket:' . $cluster['cluster_id'];
-                $basePrice = (float) ($cluster['min_price'] ?? $canonical['price'] ?? 0);
+                $basePrice = (float) ($canonical['price'] ?? $cluster['min_price'] ?? 0);
                 $sellingPrice = round($basePrice * (1 + ($margin / 100)), 2);
                 $availability = $this->availabilityFor($candidateRows);
 
@@ -139,7 +140,7 @@ class ImportSupermarketCatalog extends Command
                     'description' => $description,
                     'shipping_type' => ShippingType::FREE,
                     'shipping_cost' => 0,
-                    'external_image_url' => $this->imageUrlFor($canonical, $candidateRows),
+                    'external_image_url' => SupermarketImageGuard::cleanUrl($canonical['image_url'] ?? null),
                 ];
 
                 $payload = (!$isNew && $this->option('prices-only'))
@@ -153,6 +154,10 @@ class ImportSupermarketCatalog extends Command
 
                 $product->fill($payload);
                 $product->save();
+
+                if (!$this->option('prices-only') && $this->option('require-local-images')) {
+                    $this->attachStagedImage($product, $canonical);
+                }
                 $isNew ? $created++ : $updated++;
 
                 foreach ($candidateRows as $row) {
@@ -231,12 +236,46 @@ class ImportSupermarketCatalog extends Command
             return null;
         }
 
-        usort($candidateRows, fn ($a, $b) => ((float) ($a['price'] ?? PHP_FLOAT_MAX)) <=> ((float) ($b['price'] ?? PHP_FLOAT_MAX)));
-        $canonical = $candidateRows[0];
-        $canonical['name'] = $cluster['canonical_name'] ?? $canonical['name'] ?? null;
-        $canonical['image_url'] = $this->imageUrlFor($canonical, $candidateRows);
+        $canonical = null;
+        foreach ($candidateRows as $candidate) {
+            if (($candidate['source'] ?? null) === ($cluster['canonical_source'] ?? null)
+                && (string) ($candidate['source_product_id'] ?? '') === (string) ($cluster['canonical_source_product_id'] ?? '')) {
+                $canonical = $candidate;
+                break;
+            }
+        }
+        if (!$canonical) {
+            usort($candidateRows, fn ($a, $b) => ((float) ($a['price'] ?? PHP_FLOAT_MAX)) <=> ((float) ($b['price'] ?? PHP_FLOAT_MAX)));
+            $canonical = $candidateRows[0];
+        }
 
         return empty($canonical['name']) || empty($canonical['image_url']) ? null : $canonical;
+    }
+
+    private function attachStagedImage(Product $product, array $canonical): void
+    {
+        $path = (string) ($canonical['local_image_path'] ?? '');
+        $expectedHash = strtolower((string) ($canonical['image_sha256'] ?? ''));
+        if ($path === '' || !is_file($path) || $expectedHash === '') {
+            throw new \RuntimeException("Staged image is missing for {$product->external_key}");
+        }
+        $actualHash = hash_file('sha256', $path);
+        if (!hash_equals($expectedHash, strtolower($actualHash))) {
+            throw new \RuntimeException("Staged image checksum failed for {$product->external_key}");
+        }
+
+        $product->clearMediaCollection('product');
+        $product
+            ->addMedia($path)
+            ->preservingOriginal()
+            ->usingFileName(basename($path))
+            ->withCustomProperties([
+                'source' => $canonical['source'] ?? null,
+                'source_product_id' => $canonical['source_product_id'] ?? null,
+                'source_url' => $canonical['image_url'] ?? null,
+                'sha256' => $expectedHash,
+            ])
+            ->toMediaCollection('product');
     }
 
     private function imageUrlFor(array $canonical, array $candidateRows): ?string

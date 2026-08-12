@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from collections import defaultdict
 
 from .dedupe import cluster_products
+from .catalog import canonical_category_path, strict_clusters
+from .http import HttpClient
+from .images import ImageValidationError, stage_product_image
 from .sources import SOURCES
 from .storage import read_products, write_products
 
@@ -104,6 +109,79 @@ def merge(args: argparse.Namespace) -> None:
     print(f"Wrote {len(written)} products to {run_dir}")
 
 
+def stage_catalog(args: argparse.Namespace) -> None:
+    run_dir = Path(args.output_dir)
+    image_dir = run_dir / "images"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    staged = []
+    rejected = []
+
+    for source_name in args.sources:
+        source = SOURCES[source_name]()
+        image_client = HttpClient(delay_seconds=0.05)
+        seen: set[str] = set()
+        source_count = 0
+        for product in source.crawl(limit=args.limit_per_source, limit_categories=args.limit_categories_per_source):
+            if product.private_key in seen or product.price is None or float(product.price) <= 0:
+                continue
+            seen.add(product.private_key)
+            try:
+                product.category_path = canonical_category_path(product)
+                staged_product = stage_product_image(product, image_dir, image_client)
+            except (ImageValidationError, OSError, RuntimeError) as exc:
+                rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
+                continue
+            staged.append(staged_product)
+            source_count += 1
+            if source_count % args.progress_every == 0:
+                print(f"{source_name}: {source_count} products with validated local images...", flush=True)
+        print(f"{source_name}: staged {source_count}; rejected {sum(1 for r in rejected if r['private_key'].startswith(source_name + ':'))}")
+
+    hash_groups: dict[str, list] = defaultdict(list)
+    for product in staged:
+        hash_groups[product.image_sha256 or ""].append(product)
+    reused_placeholders = {
+        digest
+        for digest, products in hash_groups.items()
+        if digest and len({product.name.casefold() for product in products}) >= 3
+    }
+    if reused_placeholders:
+        retained = []
+        for product in staged:
+            if product.image_sha256 in reused_placeholders:
+                if product.local_image_path:
+                    Path(product.local_image_path).unlink(missing_ok=True)
+                rejected.append({
+                    "private_key": product.private_key,
+                    "name": product.name,
+                    "reason": "same image reused by at least three differently named products",
+                })
+            else:
+                retained.append(product)
+        staged = retained
+        print(f"Rejected {sum(len(hash_groups[digest]) for digest in reused_placeholders)} products using repeated placeholder images.")
+
+    products_path = run_dir / "products.jsonl"
+    with products_path.open("w", encoding="utf-8") as handle:
+        for product in staged:
+            handle.write(json.dumps(product.to_dict(), ensure_ascii=False) + "\n")
+    clusters = strict_clusters(staged)
+    clusters_path = run_dir / "clusters.json"
+    clusters_path.write_text(json.dumps([cluster.to_dict() for cluster in clusters], ensure_ascii=False, indent=2), encoding="utf-8")
+    (run_dir / "rejected.json").write_text(json.dumps(rejected, ensure_ascii=False, indent=2), encoding="utf-8")
+    manifest = {
+        "sources": args.sources,
+        "product_count": len(staged),
+        "cluster_count": len(clusters),
+        "rejected_count": len(rejected),
+        "margin_percent": 15,
+        "products_sha256": hashlib.sha256(products_path.read_bytes()).hexdigest(),
+        "clusters_sha256": hashlib.sha256(clusters_path.read_bytes()).hexdigest(),
+    }
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    print(f"Staged {len(staged)} products in {len(clusters)} strict clusters at {run_dir}")
+
+
 def import_carrefour_html(args: argparse.Namespace) -> None:
     source_cls = SOURCES["carrefour"]
     source = source_cls()
@@ -160,6 +238,14 @@ def build_parser() -> argparse.ArgumentParser:
     merge_parser.add_argument("inputs", nargs="+", help="Product JSONL files to merge")
     merge_parser.add_argument("--output-dir", help="Directory for the merged products output")
     merge_parser.set_defaults(func=merge)
+
+    stage_parser = sub.add_parser("stage-catalog", help="Crawl and retain only products with validated local images")
+    stage_parser.add_argument("--sources", nargs="+", required=True, choices=sorted(SOURCES))
+    stage_parser.add_argument("--output-dir", required=True)
+    stage_parser.add_argument("--limit-per-source", type=int)
+    stage_parser.add_argument("--limit-categories-per-source", type=int)
+    stage_parser.add_argument("--progress-every", type=int, default=100)
+    stage_parser.set_defaults(func=stage_catalog)
 
     html_parser = sub.add_parser("import-carrefour-html", help="Import rendered Carrefour category HTML snapshots")
     html_parser.add_argument("inputs", nargs="+", help="Rendered Carrefour category HTML files")

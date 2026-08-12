@@ -5,9 +5,8 @@ $sources = $sources
     ? array_values(array_filter(array_map('trim', explode(',', $sources))))
     : [
         'seoudi',
-        'mahmoud_elfar',
         'hyperone',
-        'carrefour',
+        'btech',
     ];
 
 if (filter_var(env('AMAZON_EG_ENABLED', false), FILTER_VALIDATE_BOOLEAN) && !in_array('amazon_eg', $sources, true)) {
