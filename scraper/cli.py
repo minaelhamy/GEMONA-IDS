@@ -168,20 +168,22 @@ def stage_catalog(args: argparse.Namespace) -> None:
 
         with ThreadPoolExecutor(max_workers=args.image_workers) as executor:
             with staged_path.open("a", encoding="utf-8") as staged_file:
-                futures = {executor.submit(stage_one, product): product for product in pending}
-                for future in as_completed(futures):
-                    product = futures[future]
-                    try:
-                        staged_product = future.result()
-                    except (ImageValidationError, OSError, RuntimeError) as exc:
-                        rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
-                        continue
-                    staged.append(staged_product)
-                    staged_file.write(json.dumps(staged_product.to_dict(), ensure_ascii=False) + "\n")
-                    staged_file.flush()
-                    source_count += 1
-                    if source_count % args.progress_every == 0:
-                        print(f"{source_name}: {source_count} products with validated local images...", flush=True)
+                for offset in range(0, len(pending), args.image_batch_size):
+                    batch = pending[offset : offset + args.image_batch_size]
+                    futures = {executor.submit(stage_one, product): product for product in batch}
+                    for future in as_completed(futures):
+                        product = futures[future]
+                        try:
+                            staged_product = future.result()
+                        except (ImageValidationError, OSError, RuntimeError) as exc:
+                            rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
+                            continue
+                        staged.append(staged_product)
+                        staged_file.write(json.dumps(staged_product.to_dict(), ensure_ascii=False) + "\n")
+                        staged_file.flush()
+                        source_count += 1
+                        if source_count % args.progress_every == 0:
+                            print(f"{source_name}: {source_count} products with validated local images...", flush=True)
         staging_complete.touch()
         print(f"{source_name}: staged {source_count}; rejected {sum(1 for r in rejected if r['private_key'].startswith(source_name + ':'))}")
 
@@ -294,6 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     stage_parser.add_argument("--limit-categories-per-source", type=int)
     stage_parser.add_argument("--progress-every", type=int, default=100)
     stage_parser.add_argument("--image-workers", type=int, default=8)
+    stage_parser.add_argument("--image-batch-size", type=int, default=100)
     stage_parser.set_defaults(func=stage_catalog)
 
     html_parser = sub.add_parser("import-carrefour-html", help="Import rendered Carrefour category HTML snapshots")
