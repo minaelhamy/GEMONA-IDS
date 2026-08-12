@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import unittest
+import tempfile
+import json
+from pathlib import Path
 
 from scraper.catalog import canonical_category_path, strict_clusters
 from scraper.models import Product
+from scraper.cli import _deduplicate_checkpoint
 
 
 class CatalogTests(unittest.TestCase):
@@ -46,6 +50,18 @@ class CatalogTests(unittest.TestCase):
             "Appliances",
         )
         self.assertEqual("Large Appliances", canonical_category_path(product)[0])
+
+    def test_checkpoint_deduplication_keeps_one_source_row(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "checkpoint.jsonl"
+            product = self.product("seoudi", "1", "Tahini 450 g", 100)
+            path.write_text(
+                json.dumps(product.to_dict()) + "\n" + json.dumps(product.to_dict()) + "\n",
+                encoding="utf-8",
+            )
+            rows = _deduplicate_checkpoint(path, require_local_image=False)
+            self.assertEqual(1, len(rows))
+            self.assertEqual(1, len(path.read_text(encoding="utf-8").splitlines()))
 
 
 if __name__ == "__main__":

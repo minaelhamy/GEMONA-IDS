@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import json
 import sys
@@ -115,6 +116,19 @@ def stage_catalog(args: argparse.Namespace) -> None:
     run_dir = Path(args.output_dir)
     image_dir = run_dir / "images"
     run_dir.mkdir(parents=True, exist_ok=True)
+    lock_handle = (run_dir / ".stage.lock").open("w")
+    try:
+        fcntl.flock(lock_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError as exc:
+        raise RuntimeError(f"Another staging process already holds {run_dir / '.stage.lock'}") from exc
+    try:
+        _stage_catalog_locked(args, run_dir, image_dir)
+    finally:
+        fcntl.flock(lock_handle, fcntl.LOCK_UN)
+        lock_handle.close()
+
+
+def _stage_catalog_locked(args: argparse.Namespace, run_dir: Path, image_dir: Path) -> None:
     staged = []
     rejected = []
 
@@ -127,11 +141,11 @@ def stage_catalog(args: argparse.Namespace) -> None:
         staging_complete = checkpoint_dir / f"{source_name}-staging.complete"
 
         if discovery_complete.is_file() and discovered_path.is_file():
-            candidates = read_products(discovered_path)
+            candidates = _deduplicate_checkpoint(discovered_path, require_local_image=False)
             print(f"{source_name}: resumed {len(candidates)} discovered products.", flush=True)
         else:
             source = SOURCES[source_name]()
-            candidates = read_products(discovered_path) if discovered_path.is_file() else []
+            candidates = _deduplicate_checkpoint(discovered_path, require_local_image=False) if discovered_path.is_file() else []
             seen: set[str] = {product.private_key for product in candidates}
             if candidates:
                 print(f"{source_name}: continuing partial discovery after {len(candidates)} products.", flush=True)
@@ -148,8 +162,7 @@ def stage_catalog(args: argparse.Namespace) -> None:
                         print(f"{source_name}: discovered {len(candidates)} source products...", flush=True)
             discovery_complete.touch()
 
-        source_staged = read_products(staged_path) if staged_path.is_file() else []
-        source_staged = [product for product in source_staged if product.local_image_path and Path(product.local_image_path).is_file()]
+        source_staged = _deduplicate_checkpoint(staged_path, require_local_image=True) if staged_path.is_file() else []
         staged_keys = {product.private_key for product in source_staged}
         staged.extend(source_staged)
         source_count = len(source_staged)
@@ -230,6 +243,24 @@ def stage_catalog(args: argparse.Namespace) -> None:
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     print(f"Staged {len(staged)} products in {len(clusters)} strict clusters at {run_dir}")
+
+
+def _deduplicate_checkpoint(path: Path, *, require_local_image: bool) -> list:
+    products = read_products(path)
+    unique = {}
+    for product in products:
+        if require_local_image and (not product.local_image_path or not Path(product.local_image_path).is_file()):
+            continue
+        unique[product.private_key] = product
+    deduplicated = list(unique.values())
+    if len(deduplicated) != len(products):
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        with temporary.open("w", encoding="utf-8") as handle:
+            for product in deduplicated:
+                handle.write(json.dumps(product.to_dict(), ensure_ascii=False) + "\n")
+        temporary.replace(path)
+        print(f"{path.name}: removed {len(products) - len(deduplicated)} duplicate or incomplete checkpoint rows.", flush=True)
+    return deduplicated
 
 
 def import_carrefour_html(args: argparse.Namespace) -> None:
