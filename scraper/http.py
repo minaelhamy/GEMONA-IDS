@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+from requests import Response
 
 from .settings import REQUEST_TIMEOUT_SECONDS, USER_AGENT
 
@@ -32,7 +33,7 @@ class HttpClient:
 
     def get(self, url: str, **kwargs: Any) -> FetchResult:
         time.sleep(self.delay_seconds)
-        response = self.session.get(url, timeout=REQUEST_TIMEOUT_SECONDS, **kwargs)
+        response = self._request("get", url, **kwargs)
         return FetchResult(
             url=response.url,
             status_code=response.status_code,
@@ -48,13 +49,7 @@ class HttpClient:
             "Content-Type": "application/json",
             **kwargs.pop("headers", {}),
         }
-        response = self.session.post(
-            url,
-            json=payload,
-            headers=headers,
-            timeout=REQUEST_TIMEOUT_SECONDS,
-            **kwargs,
-        )
+        response = self._request("post", url, json=payload, headers=headers, **kwargs)
         return FetchResult(
             url=response.url,
             status_code=response.status_code,
@@ -62,3 +57,15 @@ class HttpClient:
             headers=dict(response.headers),
             content=response.content,
         )
+
+    def _request(self, method: str, url: str, **kwargs: Any) -> Response:
+        last_error: requests.RequestException | None = None
+        for attempt in range(1, 4):
+            try:
+                return self.session.request(method, url, timeout=REQUEST_TIMEOUT_SECONDS, **kwargs)
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                last_error = exc
+                if attempt < 3:
+                    time.sleep(attempt * 1.5)
+        assert last_error is not None
+        raise last_error
