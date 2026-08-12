@@ -119,18 +119,43 @@ def stage_catalog(args: argparse.Namespace) -> None:
     rejected = []
 
     for source_name in args.sources:
-        source = SOURCES[source_name]()
-        seen: set[str] = set()
-        candidates = []
-        source_count = 0
-        for product in source.crawl(limit=args.limit_per_source, limit_categories=args.limit_categories_per_source):
-            if product.private_key in seen or product.price is None or float(product.price) <= 0:
-                continue
-            seen.add(product.private_key)
-            product.category_path = canonical_category_path(product)
-            candidates.append(product)
-            if len(candidates) % 500 == 0:
-                print(f"{source_name}: discovered {len(candidates)} source products...", flush=True)
+        checkpoint_dir = run_dir / "checkpoints"
+        checkpoint_dir.mkdir(parents=True, exist_ok=True)
+        discovered_path = checkpoint_dir / f"{source_name}-discovered.jsonl"
+        discovery_complete = checkpoint_dir / f"{source_name}-discovery.complete"
+        staged_path = checkpoint_dir / f"{source_name}-staged.jsonl"
+        staging_complete = checkpoint_dir / f"{source_name}-staging.complete"
+
+        if discovery_complete.is_file() and discovered_path.is_file():
+            candidates = read_products(discovered_path)
+            print(f"{source_name}: resumed {len(candidates)} discovered products.", flush=True)
+        else:
+            source = SOURCES[source_name]()
+            seen: set[str] = set()
+            candidates = []
+            with discovered_path.open("w", encoding="utf-8") as discovered_file:
+                for product in source.crawl(limit=args.limit_per_source, limit_categories=args.limit_categories_per_source):
+                    if product.private_key in seen or product.price is None or float(product.price) <= 0:
+                        continue
+                    seen.add(product.private_key)
+                    product.category_path = canonical_category_path(product)
+                    candidates.append(product)
+                    discovered_file.write(json.dumps(product.to_dict(), ensure_ascii=False) + "\n")
+                    discovered_file.flush()
+                    if len(candidates) % 500 == 0:
+                        print(f"{source_name}: discovered {len(candidates)} source products...", flush=True)
+            discovery_complete.touch()
+
+        source_staged = read_products(staged_path) if staged_path.is_file() else []
+        source_staged = [product for product in source_staged if product.local_image_path and Path(product.local_image_path).is_file()]
+        staged_keys = {product.private_key for product in source_staged}
+        staged.extend(source_staged)
+        source_count = len(source_staged)
+        if staging_complete.is_file():
+            print(f"{source_name}: resumed completed staging with {source_count} products.", flush=True)
+            continue
+        pending = [product for product in candidates if product.private_key not in staged_keys]
+        print(f"{source_name}: validating {len(pending)} remaining images with {args.image_workers} workers.", flush=True)
 
         thread_state = threading.local()
 
@@ -140,18 +165,22 @@ def stage_catalog(args: argparse.Namespace) -> None:
             return stage_product_image(product, image_dir, thread_state.client)
 
         with ThreadPoolExecutor(max_workers=args.image_workers) as executor:
-            futures = {executor.submit(stage_one, product): product for product in candidates}
-            for future in as_completed(futures):
-                product = futures[future]
-                try:
-                    staged_product = future.result()
-                except (ImageValidationError, OSError, RuntimeError) as exc:
-                    rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
-                    continue
-                staged.append(staged_product)
-                source_count += 1
-                if source_count % args.progress_every == 0:
-                    print(f"{source_name}: {source_count} products with validated local images...", flush=True)
+            with staged_path.open("a", encoding="utf-8") as staged_file:
+                futures = {executor.submit(stage_one, product): product for product in pending}
+                for future in as_completed(futures):
+                    product = futures[future]
+                    try:
+                        staged_product = future.result()
+                    except (ImageValidationError, OSError, RuntimeError) as exc:
+                        rejected.append({"private_key": product.private_key, "name": product.name, "reason": str(exc)})
+                        continue
+                    staged.append(staged_product)
+                    staged_file.write(json.dumps(staged_product.to_dict(), ensure_ascii=False) + "\n")
+                    staged_file.flush()
+                    source_count += 1
+                    if source_count % args.progress_every == 0:
+                        print(f"{source_name}: {source_count} products with validated local images...", flush=True)
+        staging_complete.touch()
         print(f"{source_name}: staged {source_count}; rejected {sum(1 for r in rejected if r['private_key'].startswith(source_name + ':'))}")
 
     hash_groups: dict[str, list] = defaultdict(list)
