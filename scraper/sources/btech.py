@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from collections.abc import Iterable
 from typing import Any
 from urllib.parse import unquote
@@ -36,7 +37,7 @@ class BtechSource(Source):
     page_size = 100
 
     def __init__(self, client: HttpClient | None = None) -> None:
-        super().__init__(client=client or HttpClient(delay_seconds=0.35))
+        super().__init__(client=client or HttpClient(delay_seconds=0.1))
         self._jwt: str | None = None
         self._detail_cache: dict[str, dict[str, Any]] = {}
 
@@ -181,32 +182,37 @@ class BtechSource(Source):
         return self._detail_cache[cache_key]
 
     def _get(self, path: str) -> dict[str, Any]:
-        headers = self._auth_headers()
-        result = self.client.get(
-            f"{self.discovery_url}{path}",
-            headers={"Accept": "application/json", **headers},
-        )
-        if result.status_code == 401:
-            self._jwt = None
+        result = None
+        for attempt in range(1, 4):
+            headers = self._auth_headers()
             result = self.client.get(
                 f"{self.discovery_url}{path}",
-                headers={"Accept": "application/json", **self._auth_headers()},
+                headers={"Accept": "application/json", **headers},
             )
+            if result.status_code == 401:
+                self._jwt = None
+            elif result.status_code < 500:
+                break
+            if attempt < 3:
+                time.sleep(attempt)
+        assert result is not None
         return self._decode_response(result.status_code, result.text, path)
 
     def _post(self, path: str, payload: dict[str, Any]) -> dict[str, Any]:
-        result = self.client.post_json(
-            f"{self.discovery_url}{path}",
-            payload,
-            headers=self._auth_headers(),
-        )
-        if result.status_code == 401:
-            self._jwt = None
+        result = None
+        for attempt in range(1, 4):
             result = self.client.post_json(
                 f"{self.discovery_url}{path}",
                 payload,
                 headers=self._auth_headers(),
             )
+            if result.status_code == 401:
+                self._jwt = None
+            elif result.status_code < 500:
+                break
+            if attempt < 3:
+                time.sleep(attempt)
+        assert result is not None
         return self._decode_response(result.status_code, result.text, path)
 
     def _auth_headers(self) -> dict[str, str]:
