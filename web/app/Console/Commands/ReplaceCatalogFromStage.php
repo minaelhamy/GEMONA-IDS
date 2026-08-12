@@ -51,7 +51,6 @@ class ReplaceCatalogFromStage extends Command
             return self::FAILURE;
         }
 
-        $oldProducts = Product::query()->get(['id', 'external_key']);
         if (!$this->option('reuse-imported')) {
             $this->info('Importing and locally attaching the staged catalog before retiring existing products.');
             $result = $this->call('supermarket:import', [
@@ -98,27 +97,33 @@ class ReplaceCatalogFromStage extends Command
         }
 
         $expectedLookup = $expectedKeys->flip();
-        $oldProducts = $oldProducts
-            ->reject(fn ($product) => $expectedLookup->has((string) $product->external_key))
-            ->map(fn ($product) => Product::find($product->id))
-            ->filter();
-        $oldIds = $oldProducts->pluck('id');
-        foreach ($oldProducts as $oldProduct) {
-            $oldProduct->clearMediaCollection('product');
-        }
-        DB::transaction(function () use ($oldProducts, $oldIds) {
-            SupermarketProductSource::whereIn('product_id', $oldIds)->delete();
-            foreach ($oldProducts as $oldProduct) {
-                $oldProduct->status = Status::INACTIVE;
-                $oldProduct->save();
-                $oldProduct->delete();
+        $retired = 0;
+        Product::query()->orderBy('id')->chunkById(200, function ($products) use ($expectedLookup, &$retired) {
+            $oldProducts = $products->reject(
+                fn ($product) => $expectedLookup->has((string) $product->external_key)
+            );
+            if ($oldProducts->isEmpty()) {
+                return;
             }
+            foreach ($oldProducts as $oldProduct) {
+                $oldProduct->clearMediaCollection('product');
+            }
+            $oldIds = $oldProducts->pluck('id');
+            DB::transaction(function () use ($oldProducts, $oldIds) {
+                SupermarketProductSource::whereIn('product_id', $oldIds)->delete();
+                foreach ($oldProducts as $oldProduct) {
+                    $oldProduct->status = Status::INACTIVE;
+                    $oldProduct->save();
+                    $oldProduct->delete();
+                }
+            });
+            $retired += $oldProducts->count();
         });
 
         $this->info(sprintf(
             'Replacement complete: %s active image-backed products; %s previous products archived and their media removed.',
             number_format($verified),
-            number_format($oldProducts->count())
+            number_format($retired)
         ));
         return self::SUCCESS;
     }
