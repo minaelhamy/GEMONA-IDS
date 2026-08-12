@@ -121,8 +121,8 @@ class BtechSource(Source):
         try:
             detail = self._product_detail(detail_slug, cache_key=clean_text(item.get("product_id")) or detail_slug)
         except RuntimeError as exc:
-            print(f"btech: skipped product {variant_id}: {exc}", file=sys.stderr, flush=True)
-            return None
+            print(f"btech: detail unavailable for {variant_id}; using exact listing row: {exc}", file=sys.stderr, flush=True)
+            detail = {}
         variant = (detail.get("variants") or {}).get(variant_id) or {}
         variant_name = clean_text(variant.get("name")) or name
         main_image = clean_text(variant.get("main_image")) or thumbnail
@@ -136,7 +136,9 @@ class BtechSource(Source):
         if not category_path and fallback_category:
             category_path = [fallback_category]
 
-        attributes = variant.get("attributes") or {}
+        attributes = variant.get("attributes") or item.get("attributes") or {}
+        if not attributes and item.get("color_options"):
+            attributes = {"color_options": item.get("color_options")}
         specifications = detail.get("specifications") or []
         description_parts = [clean_text(detail.get("description"))]
         description_parts.extend(
@@ -178,12 +180,12 @@ class BtechSource(Source):
 
     def _product_detail(self, slug: str, *, cache_key: str) -> dict[str, Any]:
         if cache_key not in self._detail_cache:
-            self._detail_cache[cache_key] = self._get(f"/products/{slug}")
+            self._detail_cache[cache_key] = self._get(f"/products/{slug}", attempts=1)
         return self._detail_cache[cache_key]
 
-    def _get(self, path: str) -> dict[str, Any]:
+    def _get(self, path: str, *, attempts: int = 3) -> dict[str, Any]:
         result = None
-        for attempt in range(1, 4):
+        for attempt in range(1, attempts + 1):
             headers = self._auth_headers()
             result = self.client.get(
                 f"{self.discovery_url}{path}",
@@ -193,7 +195,7 @@ class BtechSource(Source):
                 self._jwt = None
             elif result.status_code < 500:
                 break
-            if attempt < 3:
+            if attempt < attempts:
                 time.sleep(attempt)
         assert result is not None
         return self._decode_response(result.status_code, result.text, path)
