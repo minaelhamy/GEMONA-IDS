@@ -131,9 +131,11 @@ def stage_catalog(args: argparse.Namespace) -> None:
             print(f"{source_name}: resumed {len(candidates)} discovered products.", flush=True)
         else:
             source = SOURCES[source_name]()
-            seen: set[str] = set()
-            candidates = []
-            with discovered_path.open("w", encoding="utf-8") as discovered_file:
+            candidates = read_products(discovered_path) if discovered_path.is_file() else []
+            seen: set[str] = {product.private_key for product in candidates}
+            if candidates:
+                print(f"{source_name}: continuing partial discovery after {len(candidates)} products.", flush=True)
+            with discovered_path.open("a", encoding="utf-8") as discovered_file:
                 for product in source.crawl(limit=args.limit_per_source, limit_categories=args.limit_categories_per_source):
                     if product.private_key in seen or product.price is None or float(product.price) <= 0:
                         continue
