@@ -14,6 +14,7 @@ if (filter_var(env('AMAZON_EG_ENABLED', false), FILTER_VALIDATE_BOOLEAN) && !in_
 }
 
 return [
+    'auto_refresh_enabled' => filter_var(env('SUPERMARKET_AUTO_REFRESH_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     'margin_percent' => (float) env('SUPERMARKET_MARGIN_PERCENT', 15),
     'sync_time'      => env('SUPERMARKET_SYNC_TIME', '03:00'),
     'products_path'  => env('SUPERMARKET_PRODUCTS_PATH', base_path('../data/latest/products.jsonl')),
