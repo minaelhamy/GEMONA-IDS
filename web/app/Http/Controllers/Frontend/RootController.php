@@ -18,7 +18,7 @@ class RootController extends Controller
         return view('master', [
             'analytics' => $analytics,
             'favicon' => $themeLogo->logo,
-            'socialImage' => $themeLogo->logo,
+            'socialImage' => asset('images/social/gemona-ids-home-preview.png') . '?v=20260816',
             'canonicalUrl' => url()->current(),
         ]);
     }

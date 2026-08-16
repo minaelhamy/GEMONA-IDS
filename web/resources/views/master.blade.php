@@ -31,10 +31,15 @@
     <meta property="og:url" content="{{ $canonicalUrl }}">
     <meta property="og:image" content="{{ $socialImage }}">
     <meta property="og:image:secure_url" content="{{ $socialImage }}">
+    <meta property="og:image:type" content="image/png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="GEMONA IDS international marketplace homepage">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $siteName }}">
     <meta name="twitter:description" content="{{ $siteDescription }}">
     <meta name="twitter:image" content="{{ $socialImage }}">
+    <meta name="twitter:image:alt" content="GEMONA IDS international marketplace homepage">
 
     <script>
         window.GEMONA_CONFIG = {
