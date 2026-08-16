@@ -1,7 +1,7 @@
 <template>
     <LoadingComponent :props="loading" />
-    <section class="mb-10 sm:mb-20">
-        <div class="container">
+    <section v-if="sliders.length > 0" class="marketplace-hero">
+        <div class="marketplace-container">
             <Swiper
                 v-if="sliders.length > 0"
                 dir="rtl"
@@ -14,14 +14,14 @@
                 :modules="modules"
                 class="banner-swiper"
             >
-                <SwiperSlide v-for="slider in sliders">
+                <SwiperSlide v-for="slider in sliders" :key="slider.id">
                     <div v-if="slider.link">
                         <a :href="slider.link">
-                            <img class="w-full rounded-2xl" :src="slider.image" alt="banner" decoding="async">
+                            <img class="marketplace-hero-image" :src="slider.image" :alt="slider.title || 'Featured collection'" decoding="async">
                         </a>
                     </div>
                     <div v-else>
-                        <img class="w-full rounded-2xl" :src="slider.image" alt="banner" decoding="async">
+                        <img class="marketplace-hero-image" :src="slider.image" :alt="slider.title || 'Featured collection'" decoding="async">
                     </div>
                 </SwiperSlide>
             </Swiper>
@@ -78,3 +78,32 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+.marketplace-hero {
+    position: relative;
+    padding-top: 16px;
+}
+
+.marketplace-container {
+    width: min(100% - 24px, 1440px);
+    margin-inline: auto;
+}
+
+.marketplace-hero-image {
+    display: block;
+    width: 100%;
+    height: clamp(240px, 31vw, 410px);
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+@media (max-width: 639px) {
+    .marketplace-hero { padding-top: 8px; }
+    .marketplace-container { width: 100%; }
+    .marketplace-hero-image {
+        height: 230px;
+        border-radius: 0;
+    }
+}
+</style>
