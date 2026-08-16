@@ -29,6 +29,7 @@ export default {
 .marketplace-home {
     min-height: 70vh;
     padding-bottom: 36px;
+    overflow-x: clip;
     background: #eef0f2;
 }
 </style>

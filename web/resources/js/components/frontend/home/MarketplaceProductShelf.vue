@@ -136,6 +136,9 @@ export default {
 <style scoped>
 .marketplace-shelf-wrap {
     position: relative;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
 }
 
 .marketplace-shelf {

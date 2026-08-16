@@ -98,6 +98,10 @@ export default {
     border-radius: 6px;
 }
 
+.banner-swiper {
+    overflow: hidden;
+}
+
 @media (max-width: 639px) {
     .marketplace-hero { padding-top: 8px; }
     .marketplace-container { width: 100%; }
